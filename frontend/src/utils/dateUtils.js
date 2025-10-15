@@ -16,8 +16,9 @@ dayjs.extend(minMax)
 /**
  * 计算时间轴渲染参数
  * 显示全年时间范围（当前月前后各6个月，共12个月）
+ * 注意：pixelsPerDay 和 totalWidth 由调用方动态计算
  * @param {Array} projects - 项目列表（暂未使用，保留用于未来扩展）
- * @returns {Object} 时间轴参数
+ * @returns {Object} 时间轴基础参数（不包含 pixelsPerDay 和 totalWidth）
  */
 export function calculateTimelineParams(projects) {
   // 基于当前月份计算全年时间范围
@@ -28,15 +29,10 @@ export function calculateTimelineParams(projects) {
   // 计算总天数
   const totalDays = maxDate.diff(minDate, 'day')
   
-  // 计算总宽度
-  const totalWidth = totalDays * PIXELS_PER_DAY
-  
   return {
     minDate,
     maxDate,
-    totalDays,
-    pixelsPerDay: PIXELS_PER_DAY,
-    totalWidth
+    totalDays
   }
 }
 

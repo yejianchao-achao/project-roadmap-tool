@@ -25,74 +25,61 @@ function TimelineView({ projects, productLines, selectedProductLines, onEditProj
   const headerRef = useRef(null)
 
   /**
-   * 计算时间轴参数和分组项目
+   * 计算时间轴参数和分组项目（统一计算 pixelsPerDay）
    */
   useEffect(() => {
-    // 计算时间轴参数（全年12个月）
+    // 获取基础时间参数
     const params = calculateTimelineParams(projects)
-    setTimelineParams(params)
-
+    
     // 按产品线分组项目
     const grouped = groupProjectsByProductLine(projects, productLines)
     setGroupedProjects(grouped)
-  }, [projects, productLines])
-
-  /**
-   * 根据视口宽度和显示月份数动态计算每天像素数
-   */
-  useEffect(() => {
-    if (!scrollContainerRef.current || !timelineParams) return
-
-    const updateTimelineScale = () => {
-      // 获取实际视口宽度
-      const viewportWidthPx = scrollContainerRef.current.offsetWidth
-      
-      if (viewportWidthPx === 0) return // 避免除以0
-
-      // 计算每天像素数（基于显示的月份数）
+    
+    // 如果 scrollContainerRef 还未准备好，先设置基础参数
+    if (!scrollContainerRef.current) {
+      // 使用默认值先渲染，等 ref 准备好后再更新
       const avgDaysPerMonth = 30
-      const pixelsPerDay = viewportWidthPx / (visibleMonths * avgDaysPerMonth)
-      
-      // 计算总天数
-      const totalDays = timelineParams.maxDate.diff(timelineParams.minDate, 'day')
-      
-      // 更新timelineParams
-      setTimelineParams(prev => ({
-        ...prev,
-        pixelsPerDay: pixelsPerDay,
-        totalWidth: totalDays * pixelsPerDay
-      }))
+      const defaultPixelsPerDay = 1200 / (visibleMonths * avgDaysPerMonth) // 假设默认宽度1200px
+      setTimelineParams({
+        ...params,
+        pixelsPerDay: defaultPixelsPerDay,
+        totalWidth: params.totalDays * defaultPixelsPerDay
+      })
+      return
     }
 
-    // 延迟执行，确保DOM已渲染
-    const timer = setTimeout(updateTimelineScale, 0)
-    return () => clearTimeout(timer)
-  }, [visibleMonths, scrollContainerRef.current?.offsetWidth])
+    // 动态计算 pixelsPerDay
+    // 关键：pixelsPerDay 应该是固定的，不应该基于 visibleMonths
+    // 而应该基于一个合理的显示密度（例如每天5像素）
+    const pixelsPerDay = 5 // 固定值，每天5像素
+    
+    // totalWidth 基于实际的时间轴总天数
+    const totalWidth = params.totalDays * pixelsPerDay
+    
+    // 设置完整的时间轴参数
+    setTimelineParams({
+      ...params,
+      pixelsPerDay,
+      totalWidth
+    })
+  }, [projects, productLines, visibleMonths, scrollContainerRef.current?.offsetWidth])
 
   /**
-   * 监听窗口大小变化，重新计算布局
+   * 监听窗口大小变化，触发重新计算
+   * 注意：实际计算由上面的 useEffect 处理（通过 offsetWidth 依赖）
    */
   useEffect(() => {
     const handleResize = () => {
-      if (!scrollContainerRef.current || !timelineParams) return
-
-      const viewportWidthPx = scrollContainerRef.current.offsetWidth
-      if (viewportWidthPx === 0) return
-
-      const avgDaysPerMonth = 30
-      const pixelsPerDay = viewportWidthPx / (visibleMonths * avgDaysPerMonth)
-      const totalDays = timelineParams.maxDate.diff(timelineParams.minDate, 'day')
-      
-      setTimelineParams(prev => ({
-        ...prev,
-        pixelsPerDay: pixelsPerDay,
-        totalWidth: totalDays * pixelsPerDay
-      }))
+      // 强制触发重新渲染，让上面的 useEffect 重新计算
+      if (scrollContainerRef.current) {
+        // 通过改变依赖项触发重新计算
+        scrollContainerRef.current.offsetWidth
+      }
     }
 
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [visibleMonths, timelineParams?.minDate, timelineParams?.maxDate])
+  }, [])
 
   /**
    * 同步头部和内容区域的滚动
