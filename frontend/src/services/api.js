@@ -1,0 +1,164 @@
+/**
+ * API服务模块
+ * 封装所有与后端的HTTP通信
+ */
+import { message } from 'antd'
+
+const API_BASE_URL = '/api'
+
+/**
+ * 封装fetch请求，统一处理错误
+ * @param {string} url - 请求URL
+ * @param {Object} options - fetch选项
+ * @returns {Promise} 响应数据
+ */
+async function fetchWithErrorHandling(url, options = {}) {
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    if (!data.success) {
+      throw new Error(data.error || '请求失败')
+    }
+
+    return data
+  } catch (error) {
+    message.error(`请求失败: ${error.message}`)
+    throw error
+  }
+}
+
+// ==================== 产品线API ====================
+
+/**
+ * 获取所有产品线
+ * @returns {Promise<Array>} 产品线列表
+ */
+export async function getProductLines() {
+  const data = await fetchWithErrorHandling(`${API_BASE_URL}/productlines`)
+  return data.data.productlines
+}
+
+/**
+ * 创建新产品线
+ * @param {string} name - 产品线名称
+ * @returns {Promise<Object>} 创建的产品线对象
+ */
+export async function createProductLine(name) {
+  const data = await fetchWithErrorHandling(`${API_BASE_URL}/productlines`, {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  })
+  return data.data
+}
+
+// ==================== 项目API ====================
+
+/**
+ * 获取所有项目
+ * @returns {Promise<Array>} 项目列表
+ */
+export async function getProjects() {
+  const data = await fetchWithErrorHandling(`${API_BASE_URL}/projects`)
+  return data.data.projects
+}
+
+/**
+ * 根据ID获取项目
+ * @param {string} projectId - 项目ID
+ * @returns {Promise<Object>} 项目对象
+ */
+export async function getProjectById(projectId) {
+  const data = await fetchWithErrorHandling(`${API_BASE_URL}/projects/${projectId}`)
+  return data.data
+}
+
+/**
+ * 创建新项目
+ * @param {Object} projectData - 项目数据
+ * @param {string} projectData.name - 项目名称
+ * @param {string} projectData.productLineId - 产品线ID
+ * @param {string} projectData.startDate - 开始日期 (YYYY-MM-DD)
+ * @param {string} projectData.endDate - 结束日期 (YYYY-MM-DD)
+ * @param {string} projectData.status - 项目状态
+ * @returns {Promise<Object>} 创建的项目对象
+ */
+export async function createProject(projectData) {
+  const data = await fetchWithErrorHandling(`${API_BASE_URL}/projects`, {
+    method: 'POST',
+    body: JSON.stringify(projectData),
+  })
+  return data.data
+}
+
+/**
+ * 更新项目
+ * @param {string} projectId - 项目ID
+ * @param {Object} updates - 要更新的字段
+ * @returns {Promise<Object>} 更新后的项目对象
+ */
+export async function updateProject(projectId, updates) {
+  const data = await fetchWithErrorHandling(`${API_BASE_URL}/projects/${projectId}`, {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+  })
+  return data.data
+}
+
+/**
+ * 删除项目
+ * @param {string} projectId - 项目ID
+ * @returns {Promise<Object>} 删除结果
+ */
+export async function deleteProject(projectId) {
+  const data = await fetchWithErrorHandling(`${API_BASE_URL}/projects/${projectId}`, {
+    method: 'DELETE',
+  })
+  return data
+}
+
+// ==================== 设置API ====================
+
+/**
+ * 获取用户设置
+ * @returns {Promise<Object>} 设置对象
+ */
+export async function getSettings() {
+  const data = await fetchWithErrorHandling(`${API_BASE_URL}/settings`)
+  return data.data
+}
+
+/**
+ * 更新可见产品线配置
+ * @param {Array<string>} productLineIds - 产品线ID列表
+ * @returns {Promise<Object>} 更新后的设置对象
+ */
+export async function updateVisibleProductLines(productLineIds) {
+  const data = await fetchWithErrorHandling(`${API_BASE_URL}/settings/visible-productlines`, {
+    method: 'PUT',
+    body: JSON.stringify({ productLineIds }),
+  })
+  return data.data
+}
+
+/**
+ * 重置设置为默认值
+ * @returns {Promise<Object>} 默认设置对象
+ */
+export async function resetSettings() {
+  const data = await fetchWithErrorHandling(`${API_BASE_URL}/settings/reset`, {
+    method: 'POST',
+  })
+  return data.data
+}

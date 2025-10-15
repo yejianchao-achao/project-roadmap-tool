@@ -1,0 +1,234 @@
+{
+  "projects": [
+    {
+      "id": "proj-001",
+      "name": "商品推荐系统",
+      "productLineId": "pl-001",
+      "startDate": "2025-01-01",
+      "endDate": "2025-03-31",
+      "status": "已上",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-002",
+      "name": "订单管理优化",
+      "productLineId": "pl-001",
+      "startDate": "2025-02-15",
+      "endDate": "2025-05-15",
+      "status": "测试",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-003",
+      "name": "支付系统升级",
+      "productLineId": "pl-001",
+      "startDate": "2025-04-01",
+      "endDate": "2025-07-31",
+      "status": "开发",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-004",
+      "name": "用户画像分析",
+      "productLineId": "pl-001",
+      "startDate": "2025-06-01",
+      "endDate": "2025-09-30",
+      "status": "设计",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-005",
+      "name": "iOS客户端重构",
+      "productLineId": "pl-002",
+      "startDate": "2025-01-15",
+      "endDate": "2025-04-30",
+      "status": "已上",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-006",
+      "name": "Android性能优化",
+      "productLineId": "pl-002",
+      "startDate": "2025-03-01",
+      "endDate": "2025-06-15",
+      "status": "测试",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-007",
+      "name": "小程序开发",
+      "productLineId": "pl-002",
+      "startDate": "2025-05-01",
+      "endDate": "2025-08-31",
+      "status": "开发",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-008",
+      "name": "跨平台框架升级",
+      "productLineId": "pl-002",
+      "startDate": "2025-07-01",
+      "endDate": "2025-10-31",
+      "status": "方案",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-009",
+      "name": "数据仓库建设",
+      "productLineId": "pl-003",
+      "startDate": "2025-01-01",
+      "endDate": "2025-06-30",
+      "status": "已上",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-010",
+      "name": "实时数据处理平台",
+      "productLineId": "pl-003",
+      "startDate": "2025-04-01",
+      "endDate": "2025-09-30",
+      "status": "开发",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-011",
+      "name": "数据质量监控",
+      "productLineId": "pl-003",
+      "startDate": "2025-07-01",
+      "endDate": "2025-11-30",
+      "status": "设计",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-012",
+      "name": "智能客服机器人",
+      "productLineId": "pl-004",
+      "startDate": "2025-02-01",
+      "endDate": "2025-05-31",
+      "status": "已上",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-013",
+      "name": "图像识别系统",
+      "productLineId": "pl-004",
+      "startDate": "2025-03-15",
+      "endDate": "2025-07-31",
+      "status": "测试",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-014",
+      "name": "自然语言处理引擎",
+      "productLineId": "pl-004",
+      "startDate": "2025-06-01",
+      "endDate": "2025-10-31",
+      "status": "开发",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-015",
+      "name": "AI模型训练平台",
+      "productLineId": "pl-004",
+      "startDate": "2025-08-01",
+      "endDate": "2025-12-31",
+      "status": "方案",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-016",
+      "name": "CRM系统升级",
+      "productLineId": "pl-005",
+      "startDate": "2025-01-10",
+      "endDate": "2025-04-30",
+      "status": "已上",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-017",
+      "name": "OA办公系统",
+      "productLineId": "pl-005",
+      "startDate": "2025-03-01",
+      "endDate": "2025-07-31",
+      "status": "开发",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-018",
+      "name": "财务管理系统",
+      "productLineId": "pl-005",
+      "startDate": "2025-05-15",
+      "endDate": "2025-09-30",
+      "status": "设计",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-019",
+      "name": "人力资源系统",
+      "productLineId": "pl-005",
+      "startDate": "2025-07-01",
+      "endDate": "2025-11-30",
+      "status": "规划",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-020",
+      "name": "营销活动平台",
+      "productLineId": "pl-001",
+      "startDate": "2025-08-01",
+      "endDate": "2025-12-31",
+      "status": "规划",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-021",
+      "name": "消息推送系统",
+      "productLineId": "pl-002",
+      "startDate": "2025-02-01",
+      "endDate": "2025-03-31",
+      "status": "暂停",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-022",
+      "name": "数据可视化平台",
+      "productLineId": "pl-003",
+      "startDate": "2025-09-01",
+      "endDate": "2025-12-31",
+      "status": "规划",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    {
+      "id": "proj-ed68bf7d-077d-4d67-90d5-fac6adbfd9a1",
+      "name": "测试项目",
+      "productLineId": "pl-001",
+      "startDate": "2025-10-07",
+      "endDate": "2025-10-31",
+      "status": "设计",
+      "createdAt": 1760531216964,
+      "updatedAt": 1760531216964
+    }
+  ]
+}
