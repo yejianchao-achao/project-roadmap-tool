@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { Spin } from 'antd'
 import { ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
@@ -83,20 +83,45 @@ function TimelineView({ projects, productLines, selectedProductLines, onEditProj
 
   /**
    * 同步头部和内容区域的滚动
+   * 使用 transform 而不是 scrollLeft，因为 header 设置了 overflow-x: hidden
+   */
+  const syncHeaderScroll = useCallback(() => {
+    const scrollContainer = scrollContainerRef.current
+    const header = headerRef.current
+    if (!scrollContainer || !header) return
+    
+    const headerContent = header.querySelector('.timeline-header-content')
+    if (headerContent) {
+      const scrollLeft = scrollContainer.scrollLeft
+      headerContent.style.transform = `translateX(-${scrollLeft}px)`
+    }
+  }, [])
+
+  /**
+   * 建立滚动事件监听器，并立即执行一次同步
+   * 依赖timelineParams确保在组件完全渲染后才建立监听器
    */
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current
     const header = headerRef.current
-
-    if (!scrollContainer || !header) return
-
-    const handleScroll = () => {
-      header.scrollLeft = scrollContainer.scrollLeft
+    
+    if (!scrollContainer || !header || !timelineParams) {
+      return
     }
-
-    scrollContainer.addEventListener('scroll', handleScroll)
-    return () => scrollContainer.removeEventListener('scroll', handleScroll)
-  }, [])
+    
+    const handleScroll = () => {
+      syncHeaderScroll()
+    }
+    
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true })
+    
+    // 立即执行一次同步，确保初始状态正确
+    syncHeaderScroll()
+    
+    return () => {
+      scrollContainer.removeEventListener('scroll', handleScroll)
+    }
+  }, [syncHeaderScroll, timelineParams])
 
   /**
    * 初始化时滚动到当前月份（改进版）
@@ -123,8 +148,10 @@ function TimelineView({ projects, productLines, selectedProductLines, onEditProj
     // 使用requestAnimationFrame确保DOM已渲染
     requestAnimationFrame(() => {
       scrollContainer.scrollLeft = scrollLeft
+      // 手动触发一次同步，确保初始滚动位置的头部也同步
+      syncHeaderScroll()
     })
-  }, [timelineParams?.pixelsPerDay, timelineParams?.minDate, timelineParams?.totalWidth])
+  }, [timelineParams?.pixelsPerDay, timelineParams?.minDate, timelineParams?.totalWidth, syncHeaderScroll])
 
   /**
    * 增加显示的月份数量（缩小视口）
