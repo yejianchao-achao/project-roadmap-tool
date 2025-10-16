@@ -4,6 +4,7 @@ import { PlusOutlined } from '@ant-design/icons'
 import ProjectModal from './components/ProjectModal'
 import TimelineView from './components/Timeline/TimelineView'
 import ProductLineSettings from './components/ProductLineSettings'
+import ProductLineManagement from './components/ProductLineManagement'
 import TimelineSettings from './components/TimelineSettings'
 import { getProjects, getProductLines, getSettings, updateVisibleProductLines } from './services/api'
 import { loadTimelineSettings, saveTimelineSettings } from './utils/storageUtils'
@@ -18,6 +19,7 @@ function App() {
   const [modalVisible, setModalVisible] = useState(false)
   const [editingProject, setEditingProject] = useState(null)
   const [selectedProductLines, setSelectedProductLines] = useState([])
+  const [managementVisible, setManagementVisible] = useState(false)
   
   // 时间轴设置状态
   const [timelineRange, setTimelineRange] = useState(() => {
@@ -111,6 +113,27 @@ function App() {
   }
 
   /**
+   * 打开产品线管理界面
+   */
+  const handleOpenManagement = () => {
+    setManagementVisible(true)
+  }
+
+  /**
+   * 关闭产品线管理界面
+   */
+  const handleCloseManagement = () => {
+    setManagementVisible(false)
+  }
+
+  /**
+   * 产品线管理界面刷新数据
+   */
+  const handleManagementRefresh = () => {
+    loadData()
+  }
+
+  /**
    * 处理产品线选择变化
    * 自动保存配置
    */
@@ -171,9 +194,7 @@ function App() {
           {/* 左侧设置面板 */}
           <Col xs={24} sm={24} md={6} lg={5} xl={4}>
             <ProductLineSettings
-              productLines={productLines}
-              selectedProductLines={selectedProductLines}
-              onSelectionChange={handleProductLineSelectionChange}
+              onOpenManagement={handleOpenManagement}
             />
             
             {/* 时间轴设置 */}
@@ -216,6 +237,17 @@ function App() {
         onSuccess={handleModalSuccess}
         editingProject={editingProject}
         productLines={productLines}
+      />
+
+      {/* 产品线管理抽屉 */}
+      <ProductLineManagement
+        visible={managementVisible}
+        onClose={handleCloseManagement}
+        productLines={productLines}
+        projects={projects}
+        selectedProductLines={selectedProductLines}
+        onRefresh={handleManagementRefresh}
+        onVisibilityChange={handleProductLineSelectionChange}
       />
     </Layout>
   )

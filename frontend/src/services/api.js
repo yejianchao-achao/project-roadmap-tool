@@ -56,11 +56,68 @@ export async function getProductLines() {
  * @returns {Promise<Object>} 创建的产品线对象
  */
 export async function createProductLine(name) {
-  const data = await fetchWithErrorHandling(`${API_BASE_URL}/productlines`, {
+  const response = await fetch(`${API_BASE_URL}/productlines`, {
     method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify({ name }),
   })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.error || '创建产品线失败')
+  }
+
   return data.data
+}
+
+/**
+ * 更新产品线
+ * @param {string} id - 产品线ID
+ * @param {string} name - 新名称
+ * @returns {Promise<Object>} 更新后的产品线数据
+ */
+export const updateProductLine = async (id, name) => {
+  const response = await fetch(`${API_BASE_URL}/productlines/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ name }),
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.error || '更新产品线失败')
+  }
+
+  return data.data
+}
+
+/**
+ * 删除产品线
+ * @param {string} id - 产品线ID
+ * @returns {Promise<Object>} 删除结果
+ */
+export const deleteProductLine = async (id) => {
+  const response = await fetch(`${API_BASE_URL}/productlines/${id}`, {
+    method: 'DELETE',
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    // 特殊处理403错误（有关联项目）
+    if (response.status === 403) {
+      throw new Error(data.error || '该产品线有关联项目，无法删除')
+    }
+    throw new Error(data.error || '删除产品线失败')
+  }
+
+  return data
 }
 
 // ==================== 项目API ====================
