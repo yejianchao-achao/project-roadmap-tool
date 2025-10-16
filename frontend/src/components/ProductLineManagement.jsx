@@ -1,14 +1,75 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Drawer, Table, Button, Input, Space, Switch, Modal, message } from 'antd'
-import { PlusOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
+import { PlusOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined, HolderOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
-import { createProductLine, updateProductLine, deleteProductLine } from '../services/api'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { createProductLine, updateProductLine, deleteProductLine, reorderProductLines } from '../services/api'
 
 const { confirm } = Modal
 
 /**
+ * 可拖拽的表格行组件
+ */
+function DraggableRow({ id, children, ...props }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  // 将拖拽监听器应用到第一个td（拖拽列）
+  const childrenWithProps = Array.isArray(children) 
+    ? children.map((child, index) => {
+        if (index === 0) {
+          // 第一列添加拖拽监听器
+          return {
+            ...child,
+            props: {
+              ...child.props,
+              ...attributes,
+              ...listeners,
+              style: { ...child.props?.style, cursor: 'grab' }
+            }
+          }
+        }
+        return child
+      })
+    : children
+
+  return (
+    <tr ref={setNodeRef} style={style} {...props}>
+      {childrenWithProps}
+    </tr>
+  )
+}
+
+/**
  * 产品线管理组件
- * 提供产品线的增删改查和显示/隐藏管理功能
+ * 提供产品线的增删改查、显示/隐藏管理和拖拽排序功能
  * 
  * @param {boolean} visible - 抽屉是否可见
  * @param {function} onClose - 关闭回调
@@ -33,6 +94,54 @@ function ProductLineManagement({
   const [editingName, setEditingName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [newProductLineName, setNewProductLineName] = useState('')
+  const [sortedProductLines, setSortedProductLines] = useState([])
+
+  // 配置拖拽传感器
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  // 初始化排序列表
+  useEffect(() => {
+    const sorted = [...productLines].sort((a, b) => (a.order || 0) - (b.order || 0))
+    setSortedProductLines(sorted)
+  }, [productLines])
+
+  /**
+   * 处理拖拽结束
+   */
+  const handleDragEnd = async (event) => {
+    const { active, over } = event
+
+    if (active.id !== over.id) {
+      const oldIndex = sortedProductLines.findIndex(pl => pl.id === active.id)
+      const newIndex = sortedProductLines.findIndex(pl => pl.id === over.id)
+
+      // 更新本地状态
+      const newOrder = arrayMove(sortedProductLines, oldIndex, newIndex)
+      setSortedProductLines(newOrder)
+
+      // 生成order列表
+      const orderList = newOrder.map((pl, index) => ({
+        id: pl.id,
+        order: index
+      }))
+
+      // 保存到后端
+      try {
+        await reorderProductLines(orderList)
+        message.success('排序已保存')
+        onRefresh()
+      } catch (error) {
+        message.error('保存排序失败')
+        // 恢复原顺序
+        setSortedProductLines(productLines)
+      }
+    }
+  }
 
   /**
    * 计算产品线关联的项目数量
@@ -172,10 +281,19 @@ function ProductLineManagement({
    */
   const columns = [
     {
+      title: '拖拽',
+      key: 'drag',
+      width: 50,
+      align: 'center',
+      render: (_, record) => (
+        <HolderOutlined style={{ cursor: 'grab', color: '#999' }} />
+      )
+    },
+    {
       title: '产品线名称',
       dataIndex: 'name',
       key: 'name',
-      width: '30%',
+      width: '28%',
       render: (text, record) => {
         if (editingId === record.id) {
           return (
@@ -335,21 +453,40 @@ function ProductLineManagement({
         )}
       </div>
 
-      {/* 产品线列表表格 */}
-      <Table
-        columns={columns}
-        dataSource={productLines}
-        rowKey="id"
-        loading={loading}
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          showTotal: (total) => `共 ${total} 条`
-        }}
-        locale={{
-          emptyText: '暂无产品线数据'
-        }}
-      />
+      {/* 产品线列表表格（支持拖拽排序） */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={sortedProductLines.map(pl => pl.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <Table
+            columns={columns}
+            dataSource={sortedProductLines}
+            rowKey="id"
+            loading={loading}
+            components={{
+              body: {
+                row: DraggableRow,
+              },
+            }}
+            onRow={(record) => ({
+              id: record.id,
+            })}
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showTotal: (total) => `共 ${total} 条`
+            }}
+            locale={{
+              emptyText: '暂无产品线数据'
+            }}
+          />
+        </SortableContext>
+      </DndContext>
 
       {/* 说明文字 */}
       <div style={{ 

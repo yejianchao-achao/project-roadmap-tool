@@ -141,3 +141,69 @@ def delete_productline(productline_id):
             'error': error_msg,
             'relatedProjectsCount': related_count
         }), 403
+
+
+@productlines_bp.route('/api/productlines/reorder', methods=['PUT'])
+@handle_errors
+def reorder_productlines():
+    """
+    批量更新产品线顺序
+    
+    Request Body:
+        {
+            "orderList": [
+                {"id": "pl-001", "order": 0},
+                {"id": "pl-002", "order": 1}
+            ]
+        }
+    
+    Returns:
+        JSON响应，包含更新后的产品线列表
+    """
+    data = request.get_json()
+    
+    # 验证请求数据
+    if not data or 'orderList' not in data:
+        return jsonify({
+            'success': False,
+            'error': '缺少必需字段: orderList'
+        }), 400
+    
+    order_list = data['orderList']
+    
+    # 验证orderList格式
+    if not isinstance(order_list, list):
+        return jsonify({
+            'success': False,
+            'error': 'orderList必须是数组'
+        }), 400
+    
+    if len(order_list) == 0:
+        return jsonify({
+            'success': False,
+            'error': 'orderList不能为空'
+        }), 400
+    
+    # 验证每个元素的格式
+    for item in order_list:
+        if not isinstance(item, dict) or 'id' not in item or 'order' not in item:
+            return jsonify({
+                'success': False,
+                'error': 'orderList中的每个元素必须包含id和order字段'
+            }), 400
+    
+    try:
+        # 更新排序
+        productlines = service.reorder(order_list)
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'productlines': productlines
+            }
+        })
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 400

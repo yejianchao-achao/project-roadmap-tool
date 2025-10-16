@@ -14,9 +14,10 @@ class ProductLine:
         id: 产品线唯一标识符（UUID格式）
         name: 产品线名称
         createdAt: 创建时间戳（毫秒）
+        order: 排序位置（整数，用于控制产品线显示顺序）
     """
     
-    def __init__(self, name, id=None, createdAt=None):
+    def __init__(self, name, id=None, createdAt=None, order=None):
         """
         初始化产品线对象
         
@@ -24,10 +25,12 @@ class ProductLine:
             name: 产品线名称
             id: 产品线ID（可选，不提供则自动生成）
             createdAt: 创建时间戳（可选，不提供则使用当前时间）
+            order: 排序位置（可选，不提供则默认为0）
         """
         self.id = id or self._generate_id()
         self.name = name
         self.createdAt = createdAt or self._get_current_timestamp()
+        self.order = order if order is not None else 0
         
         # 验证数据
         self.validate()
@@ -78,7 +81,8 @@ class ProductLine:
         return {
             'id': self.id,
             'name': self.name,
-            'createdAt': self.createdAt
+            'createdAt': self.createdAt,
+            'order': self.order
         }
     
     @classmethod
@@ -95,5 +99,6 @@ class ProductLine:
         return cls(
             name=data['name'],
             id=data.get('id'),
-            createdAt=data.get('createdAt')
+            createdAt=data.get('createdAt'),
+            order=data.get('order', 0)  # 向后兼容：如果没有order字段，默认为0
         )

@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
 
 /**
  * 计算项目块的位置和尺寸
+ * 注意：项目块宽度会减去1天，用于显示项目间的视觉间隔
  * @param {Object} project - 项目对象
  * @param {Object} timelineParams - 时间轴参数
  * @returns {Object} 位置和尺寸 {left, width}
@@ -19,7 +20,10 @@ export function calculateProjectBarPosition(project, timelineParams) {
   
   // 计算宽度（项目持续天数）
   const duration = dayjs(project.endDate).diff(project.startDate, 'day') + 1 // +1 包含结束日
-  const width = duration * pixelsPerDay
+  
+  // 减去1天宽度用于显示项目间隔，但保证最小宽度为0.5天
+  // 这样可以在所有项目块之间形成视觉上的间隔，提高可读性
+  const width = Math.max(duration * pixelsPerDay - pixelsPerDay, pixelsPerDay * 0.5)
   
   return { left, width }
 }

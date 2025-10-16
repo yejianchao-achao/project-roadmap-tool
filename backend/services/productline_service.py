@@ -18,13 +18,39 @@ class ProductLineService:
     
     def get_all(self):
         """
-        获取所有产品线
+        获取所有产品线（按order排序）
         
         Returns:
             list: 产品线列表
         """
         data = read_json_file(self.data_file)
-        return data.get('productlines', [])
+        productlines = data.get('productlines', [])
+        
+        # 数据迁移：为没有order字段的产品线添加order
+        self._migrate_productline_order(productlines)
+        
+        # 按order排序
+        productlines.sort(key=lambda x: x.get('order', 0))
+        
+        return productlines
+    
+    def _migrate_productline_order(self, productlines):
+        """
+        数据迁移：为没有order字段的产品线添加order
+        
+        Args:
+            productlines: 产品线列表
+        """
+        needs_migration = False
+        for i, pl in enumerate(productlines):
+            if 'order' not in pl:
+                pl['order'] = i
+                needs_migration = True
+        
+        # 如果有数据需要迁移，保存到文件
+        if needs_migration:
+            data = {'productlines': productlines}
+            write_json_file(self.data_file, data)
     
     def get_by_id(self, productline_id):
         """
@@ -44,7 +70,7 @@ class ProductLineService:
     
     def create(self, name):
         """
-        创建新产品线
+        创建新产品线（自动分配order）
         
         Args:
             name: 产品线名称
@@ -55,9 +81,6 @@ class ProductLineService:
         Raises:
             ValueError: 数据验证失败
         """
-        # 创建产品线对象（会自动验证）
-        productline = ProductLine(name=name)
-        
         # 读取现有数据
         data = read_json_file(self.data_file)
         productlines = data.get('productlines', [])
@@ -66,6 +89,13 @@ class ProductLineService:
         for pl in productlines:
             if pl['name'] == name:
                 raise ValueError(f"产品线名称已存在: {name}")
+        
+        # 计算新的order值（最大order + 1）
+        max_order = max([pl.get('order', 0) for pl in productlines], default=-1)
+        new_order = max_order + 1
+        
+        # 创建产品线对象（会自动验证）
+        productline = ProductLine(name=name, order=new_order)
         
         # 添加新产品线
         productlines.append(productline.to_dict())
@@ -199,3 +229,39 @@ class ProductLineService:
             'success': True,
             'message': '产品线删除成功'
         }
+    
+    def reorder(self, order_list):
+        """
+        批量更新产品线顺序
+        
+        Args:
+            order_list: 排序列表 [{'id': 'pl-001', 'order': 0}, ...]
+            
+        Returns:
+            list: 更新后的产品线列表
+            
+        Raises:
+            ValueError: 参数验证失败
+        """
+        # 验证参数
+        if not order_list or not isinstance(order_list, list):
+            raise ValueError('orderList必须是非空数组')
+        
+        # 读取数据
+        data = read_json_file(self.data_file)
+        productlines = data.get('productlines', [])
+        
+        # 创建ID到order的映射
+        order_map = {item['id']: item['order'] for item in order_list}
+        
+        # 更新order
+        for pl in productlines:
+            if pl['id'] in order_map:
+                pl['order'] = order_map[pl['id']]
+        
+        # 保存数据
+        data['productlines'] = productlines
+        write_json_file(self.data_file, data)
+        
+        # 返回排序后的列表
+        return self.get_all()

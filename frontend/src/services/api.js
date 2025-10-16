@@ -120,6 +120,29 @@ export const deleteProductLine = async (id) => {
   return data
 }
 
+/**
+ * 批量更新产品线顺序
+ * @param {Array<Object>} orderList - 排序列表 [{id, order}, ...]
+ * @returns {Promise<Array>} 更新后的产品线列表
+ */
+export const reorderProductLines = async (orderList) => {
+  const response = await fetch(`${API_BASE_URL}/productlines/reorder`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ orderList }),
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.error || '更新排序失败')
+  }
+
+  return data.data.productlines
+}
+
 // ==================== 项目API ====================
 
 /**
