@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Layout, Button, message, Row, Col } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import ProjectModal from './components/ProjectModal'
 import TimelineView from './components/Timeline/TimelineView'
 import ProductLineSettings from './components/ProductLineSettings'
+import TimelineSettings from './components/TimelineSettings'
 import { getProjects, getProductLines, getSettings, updateVisibleProductLines } from './services/api'
+import { loadTimelineSettings, saveTimelineSettings } from './utils/storageUtils'
+import { DEFAULT_VISIBLE_MONTHS } from './utils/constants'
 
 const { Header, Content } = Layout
 
@@ -15,6 +18,17 @@ function App() {
   const [modalVisible, setModalVisible] = useState(false)
   const [editingProject, setEditingProject] = useState(null)
   const [selectedProductLines, setSelectedProductLines] = useState([])
+  
+  // 时间轴设置状态
+  const [timelineRange, setTimelineRange] = useState(() => {
+    const saved = loadTimelineSettings()
+    return saved?.timelineRange || { type: '1year', customRange: null }
+  })
+  
+  const [visibleMonths, setVisibleMonths] = useState(() => {
+    const saved = loadTimelineSettings()
+    return saved?.visibleMonths || DEFAULT_VISIBLE_MONTHS
+  })
 
   useEffect(() => {
     loadData()
@@ -113,6 +127,24 @@ function App() {
     }
   }
 
+  /**
+   * 处理时间范围变化
+   */
+  const handleRangeChange = useCallback((newRange) => {
+    setTimelineRange(newRange)
+    // 保存到localStorage
+    saveTimelineSettings({ timelineRange: newRange, visibleMonths })
+  }, [visibleMonths])
+
+  /**
+   * 处理缩放变化
+   */
+  const handleZoomChange = useCallback((newVisibleMonths) => {
+    setVisibleMonths(newVisibleMonths)
+    // 保存到localStorage
+    saveTimelineSettings({ timelineRange, visibleMonths: newVisibleMonths })
+  }, [timelineRange])
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Header style={{ 
@@ -143,6 +175,15 @@ function App() {
               selectedProductLines={selectedProductLines}
               onSelectionChange={handleProductLineSelectionChange}
             />
+            
+            {/* 时间轴设置 */}
+            <TimelineSettings
+              projects={projects}
+              currentRange={timelineRange}
+              onRangeChange={handleRangeChange}
+              visibleMonths={visibleMonths}
+              onZoomChange={handleZoomChange}
+            />
           </Col>
 
           {/* 右侧时间轴 */}
@@ -160,6 +201,8 @@ function App() {
                 productLines={productLines}
                 selectedProductLines={selectedProductLines}
                 onEditProject={handleEditProject}
+                customTimelineRange={timelineRange}
+                visibleMonths={visibleMonths}
               />
             </div>
           </Col>

@@ -1,13 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { Spin } from 'antd'
-import { ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import TimelineHeader from './TimelineHeader'
 import TimelineGrid from './TimelineGrid'
 import Swimlane from './Swimlane'
-import { calculateTimelineParams } from '../../utils/dateUtils'
+import { calculateTimelineParams, calculateCustomTimelineParams } from '../../utils/dateUtils'
 import { groupProjectsByProductLine } from '../../utils/layoutUtils'
-import { DEFAULT_VISIBLE_MONTHS, MIN_VISIBLE_MONTHS, MAX_VISIBLE_MONTHS } from '../../utils/constants'
 import '../../styles/timeline.css'
 
 /**
@@ -16,11 +14,19 @@ import '../../styles/timeline.css'
  * @param {array} productLines - 产品线列表
  * @param {array} selectedProductLines - 选中的产品线ID列表
  * @param {function} onEditProject - 编辑项目回调
+ * @param {object} customTimelineRange - 自定义时间范围 { type, customRange }
+ * @param {number} visibleMonths - 视口显示月份数（从外部传入）
  */
-function TimelineView({ projects, productLines, selectedProductLines, onEditProject }) {
+function TimelineView({ 
+  projects, 
+  productLines, 
+  selectedProductLines, 
+  onEditProject,
+  customTimelineRange,
+  visibleMonths
+}) {
   const [timelineParams, setTimelineParams] = useState(null)
   const [groupedProjects, setGroupedProjects] = useState({})
-  const [visibleMonths, setVisibleMonths] = useState(DEFAULT_VISIBLE_MONTHS)
   const scrollContainerRef = useRef(null)
   const headerRef = useRef(null)
 
@@ -28,8 +34,13 @@ function TimelineView({ projects, productLines, selectedProductLines, onEditProj
    * 计算时间轴参数和分组项目（统一计算 pixelsPerDay）
    */
   useEffect(() => {
-    // 获取基础时间参数
-    const params = calculateTimelineParams(projects)
+    // 使用自定义时间范围计算参数（如果提供）
+    const params = customTimelineRange 
+      ? calculateCustomTimelineParams(
+          customTimelineRange.type, 
+          customTimelineRange.customRange
+        )
+      : calculateTimelineParams(projects)
     
     // 按产品线分组项目
     const grouped = groupProjectsByProductLine(projects, productLines)
@@ -62,7 +73,7 @@ function TimelineView({ projects, productLines, selectedProductLines, onEditProj
       pixelsPerDay,
       totalWidth
     })
-  }, [projects, productLines, visibleMonths, scrollContainerRef.current?.offsetWidth])
+  }, [projects, productLines, customTimelineRange, visibleMonths, scrollContainerRef.current?.offsetWidth])
 
   /**
    * 监听窗口大小变化，触发重新计算
@@ -154,18 +165,15 @@ function TimelineView({ projects, productLines, selectedProductLines, onEditProj
   }, [timelineParams?.pixelsPerDay, timelineParams?.minDate, timelineParams?.totalWidth, syncHeaderScroll])
 
   /**
-   * 增加显示的月份数量（缩小视口）
+   * 当时间范围变化时，滚动到起始位置
    */
-  const handleZoomOut = () => {
-    setVisibleMonths(prev => Math.min(prev + 1, MAX_VISIBLE_MONTHS))
-  }
-
-  /**
-   * 减少显示的月份数量（放大视口）
-   */
-  const handleZoomIn = () => {
-    setVisibleMonths(prev => Math.max(prev - 1, MIN_VISIBLE_MONTHS))
-  }
+  useEffect(() => {
+    if (!scrollContainerRef.current || !timelineParams) return
+    
+    // 滚动到起始位置
+    scrollContainerRef.current.scrollLeft = 0
+    syncHeaderScroll()
+  }, [customTimelineRange, syncHeaderScroll])
 
   /**
    * 获取视口宽度（始终撑满屏幕）
@@ -196,27 +204,6 @@ function TimelineView({ projects, productLines, selectedProductLines, onEditProj
 
   return (
     <div className="timeline-container">
-      {/* 缩放控制按钮 */}
-      <div className="timeline-zoom-controls">
-        <button 
-          className="zoom-button" 
-          onClick={handleZoomOut}
-          disabled={visibleMonths >= MAX_VISIBLE_MONTHS}
-          title="显示更多月份"
-        >
-          <ZoomOutOutlined />
-        </button>
-        <span className="zoom-level">{visibleMonths}个月</span>
-        <button 
-          className="zoom-button" 
-          onClick={handleZoomIn}
-          disabled={visibleMonths <= MIN_VISIBLE_MONTHS}
-          title="显示更少月份"
-        >
-          <ZoomInOutlined />
-        </button>
-      </div>
-
       {/* 时间轴头部 - 月份刻度 */}
       <TimelineHeader 
         timelineParams={timelineParams} 

@@ -1,0 +1,102 @@
+/* 时间轴设置组件样式 */
+
+.timeline-settings-card {
+  margin-bottom: 16px;
+}
+
+.timeline-settings-card .ant-card-body {
+  padding: 16px;
+}
+
+/* 项目时间范围提示 */
+.project-range-hint {
+  color: #8c8c8c;
+  font-size: 12px;
+  margin-bottom: 12px;
+  padding: 8px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  line-height: 1.5;
+}
+
+.project-range-hint.no-projects {
+  color: #bfbfbf;
+  text-align: center;
+}
+
+/* 时间范围选项 */
+.range-options {
+  margin-bottom: 16px;
+}
+
+.range-options .ant-radio-wrapper {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.range-options .ant-space-vertical {
+  width: 100%;
+}
+
+/* 自定义日期选择器 */
+.custom-range-picker {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #fafafa;
+  border-radius: 4px;
+}
+
+.custom-range-picker .ant-picker {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.range-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.range-actions .ant-btn {
+  flex: 1;
+}
+
+/* 警告提示 */
+.range-warning {
+  margin-top: 8px;
+  margin-bottom: 12px;
+  padding: 8px;
+  background-color: #fff7e6;
+  border: 1px solid #ffd591;
+  border-radius: 4px;
+  color: #d46b08;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* 缩放控制 */
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding-top: 16px;
+  margin-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.zoom-controls .ant-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zoom-controls .zoom-level {
+  min-width: 60px;
+  text-align: center;
+  font-size: 14px;
+  color: #595959;
+  font-weight: 500;
+}
