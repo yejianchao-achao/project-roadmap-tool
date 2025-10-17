@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Modal, Form, Input, Select, DatePicker, message, Popconfirm, Button, Space } from 'antd'
+import { Modal, Form, Input, Select, DatePicker, message, Popconfirm, Button, Space, Badge } from 'antd'
 import dayjs from 'dayjs'
 import { PROJECT_STATUSES } from '../utils/constants'
-import { getProductLines, createProductLine, createProject, updateProject, deleteProject } from '../services/api'
+import { getProductLines, createProductLine, createProject, updateProject, deleteProject, getOwners, createOwner } from '../services/api'
 
 const { Option } = Select
 
@@ -20,6 +20,9 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
   const [isCreatingProductLine, setIsCreatingProductLine] = useState(false)
   const [newProductLineName, setNewProductLineName] = useState('')
   const [localProductLines, setLocalProductLines] = useState([])
+  const [owners, setOwners] = useState([])
+  const [isCreatingOwner, setIsCreatingOwner] = useState(false)
+  const [newOwnerName, setNewOwnerName] = useState('')
 
   // 是否为编辑模式
   const isEditMode = !!editingProject
@@ -29,12 +32,29 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
     setLocalProductLines(productLines)
   }, [productLines])
 
+  // 加载人员列表
+  useEffect(() => {
+    if (visible) {
+      loadOwners()
+    }
+  }, [visible])
+
+  const loadOwners = async () => {
+    try {
+      const data = await getOwners()
+      setOwners(data.owners || [])
+    } catch (error) {
+      message.error('加载人员列表失败: ' + error.message)
+    }
+  }
+
   // 编辑模式时填充表单
   useEffect(() => {
     if (visible && editingProject) {
       form.setFieldsValue({
         name: editingProject.name,
         productLineId: editingProject.productLineId,
+        ownerId: editingProject.ownerId,
         startDate: dayjs(editingProject.startDate),
         endDate: dayjs(editingProject.endDate),
         status: editingProject.status
@@ -86,6 +106,46 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
   }
 
   /**
+   * 处理新建人员
+   */
+  const handleCreateOwner = async () => {
+    if (!newOwnerName.trim()) {
+      message.warning('请输入人员姓名')
+      return
+    }
+
+    try {
+      setLoading(true)
+      const newOwner = await createOwner(newOwnerName.trim())
+      
+      // 更新本地人员列表
+      const updatedOwners = [...owners, newOwner]
+      setOwners(updatedOwners)
+      
+      // 自动选中新建的人员
+      form.setFieldsValue({ ownerId: newOwner.id })
+      
+      // 重置新建状态
+      setIsCreatingOwner(false)
+      setNewOwnerName('')
+      
+      message.success('人员创建成功')
+    } catch (error) {
+      message.error('人员创建失败: ' + error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  /**
+   * 取消新建人员
+   */
+  const handleCancelCreateOwner = () => {
+    setIsCreatingOwner(false)
+    setNewOwnerName('')
+  }
+
+  /**
    * 表单提交处理
    */
   const handleSubmit = async () => {
@@ -99,6 +159,7 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
       const projectData = {
         name: values.name.trim(),
         productLineId: values.productLineId,
+        ownerId: values.ownerId,
         startDate: values.startDate.format('YYYY-MM-DD'),
         endDate: values.endDate.format('YYYY-MM-DD'),
         status: values.status
@@ -153,6 +214,8 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
     form.resetFields()
     setIsCreatingProductLine(false)
     setNewProductLineName('')
+    setIsCreatingOwner(false)
+    setNewOwnerName('')
     onClose()
   }
 
@@ -272,6 +335,51 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
             {localProductLines.map((pl) => (
               <Option key={pl.id} value={pl.id}>
                 {pl.name}
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
+
+        {/* 项目负责人 */}
+        <Form.Item
+          label="项目负责人"
+          name="ownerId"
+          rules={[{ required: true, message: '请选择项目负责人' }]}
+        >
+          <Select
+            placeholder="请选择项目负责人"
+            dropdownRender={(menu) => (
+              <>
+                {menu}
+                <div style={{ padding: '8px', borderTop: '1px solid #f0f0f0' }}>
+                  {isCreatingOwner ? (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <Input
+                        placeholder="输入人员姓名"
+                        value={newOwnerName}
+                        onChange={(e) => setNewOwnerName(e.target.value)}
+                        onPressEnter={handleCreateOwner}
+                        maxLength={50}
+                        autoFocus
+                      />
+                      <a onClick={handleCreateOwner}>确定</a>
+                      <a onClick={handleCancelCreateOwner}>取消</a>
+                    </div>
+                  ) : (
+                    <a onClick={() => setIsCreatingOwner(true)}>
+                      + 新建人员
+                    </a>
+                  )}
+                </div>
+              </>
+            )}
+          >
+            {owners.map((owner) => (
+              <Option key={owner.id} value={owner.id}>
+                <Space>
+                  <Badge color={owner.color} />
+                  {owner.name}
+                </Space>
               </Option>
             ))}
           </Select>

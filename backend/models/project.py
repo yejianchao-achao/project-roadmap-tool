@@ -26,7 +26,7 @@ class Project:
     VALID_STATUSES = ['规划', '方案', '设计', '开发', '测试', '已上', '暂停']
     
     def __init__(self, name, productLineId, startDate, endDate, status,
-                 id=None, createdAt=None, updatedAt=None):
+                 ownerId=None, id=None, createdAt=None, updatedAt=None):
         """
         初始化项目对象
         
@@ -36,6 +36,7 @@ class Project:
             startDate: 开始日期（YYYY-MM-DD格式）
             endDate: 结束日期（YYYY-MM-DD格式）
             status: 项目状态
+            ownerId: 项目负责人ID（必填）
             id: 项目ID（可选，不提供则自动生成）
             createdAt: 创建时间戳（可选，不提供则使用当前时间）
             updatedAt: 更新时间戳（可选，不提供则使用当前时间）
@@ -43,6 +44,7 @@ class Project:
         self.id = id or self._generate_id()
         self.name = name
         self.productLineId = productLineId
+        self.ownerId = ownerId  # 新增：项目负责人ID
         self.startDate = startDate
         self.endDate = endDate
         self.status = status
@@ -93,6 +95,10 @@ class Project:
         if not self.productLineId or not isinstance(self.productLineId, str):
             raise ValueError("产品线ID必须是非空字符串")
         
+        # 验证负责人ID
+        if not self.ownerId or not isinstance(self.ownerId, str):
+            raise ValueError("项目负责人ID必须是非空字符串")
+        
         # 验证状态
         if self.status not in self.VALID_STATUSES:
             raise ValueError(f"项目状态必须是以下之一: {', '.join(self.VALID_STATUSES)}")
@@ -119,6 +125,7 @@ class Project:
             'id': self.id,
             'name': self.name,
             'productLineId': self.productLineId,
+            'ownerId': self.ownerId,  # 新增
             'startDate': self.startDate,
             'endDate': self.endDate,
             'status': self.status,
@@ -143,6 +150,7 @@ class Project:
             startDate=data['startDate'],
             endDate=data['endDate'],
             status=data['status'],
+            ownerId=data.get('ownerId'),  # 新增，使用get以兼容旧数据
             id=data.get('id'),
             createdAt=data.get('createdAt'),
             updatedAt=data.get('updatedAt')
@@ -155,7 +163,7 @@ class Project:
         Args:
             **kwargs: 要更新的属性键值对
         """
-        allowed_fields = ['name', 'productLineId', 'startDate', 'endDate', 'status']
+        allowed_fields = ['name', 'productLineId', 'ownerId', 'startDate', 'endDate', 'status']  # 新增ownerId
         
         for key, value in kwargs.items():
             if key in allowed_fields:

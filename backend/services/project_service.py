@@ -42,13 +42,14 @@ class ProjectService:
                 return project
         return None
     
-    def create(self, name, productLineId, startDate, endDate, status):
+    def create(self, name, productLineId, ownerId, startDate, endDate, status):
         """
         创建新项目
         
         Args:
             name: 项目名称
             productLineId: 所属产品线ID
+            ownerId: 项目负责人ID
             startDate: 开始日期（YYYY-MM-DD）
             endDate: 结束日期（YYYY-MM-DD）
             status: 项目状态
@@ -63,6 +64,7 @@ class ProjectService:
         project = Project(
             name=name,
             productLineId=productLineId,
+            ownerId=ownerId,
             startDate=startDate,
             endDate=endDate,
             status=status

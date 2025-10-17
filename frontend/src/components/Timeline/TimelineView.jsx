@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { Spin } from 'antd'
+import { Spin, Segmented } from 'antd'
 import dayjs from 'dayjs'
 import TimelineHeader from './TimelineHeader'
 import TimelineGrid from './TimelineGrid'
 import Swimlane from './Swimlane'
 import { calculateTimelineParams, calculateCustomTimelineParams } from '../../utils/dateUtils'
 import { groupProjectsByProductLine } from '../../utils/layoutUtils'
+import { BOARD_TYPES } from '../../utils/constants'
 import '../../styles/timeline.css'
 
 /**
@@ -16,6 +17,9 @@ import '../../styles/timeline.css'
  * @param {function} onEditProject - 编辑项目回调
  * @param {object} customTimelineRange - 自定义时间范围 { type, customRange }
  * @param {number} visibleMonths - 视口显示月份数（从外部传入）
+ * @param {array} owners - 人员列表
+ * @param {string} boardType - 看板类型（'status' | 'owner'）
+ * @param {function} onBoardTypeChange - 看板类型变化回调
  */
 function TimelineView({ 
   projects, 
@@ -23,7 +27,10 @@ function TimelineView({
   selectedProductLines, 
   onEditProject,
   customTimelineRange,
-  visibleMonths
+  visibleMonths,
+  owners = [],
+  boardType = BOARD_TYPES.STATUS,
+  onBoardTypeChange
 }) {
   const [timelineParams, setTimelineParams] = useState(null)
   const [groupedProjects, setGroupedProjects] = useState({})
@@ -204,6 +211,23 @@ function TimelineView({
 
   return (
     <div className="timeline-container">
+      {/* 看板切换控件 */}
+      <div style={{ 
+        marginBottom: 16, 
+        display: 'flex', 
+        justifyContent: 'flex-end',
+        alignItems: 'center'
+      }}>
+        <Segmented
+          value={boardType}
+          onChange={onBoardTypeChange}
+          options={[
+            { label: '进度看板', value: BOARD_TYPES.STATUS },
+            { label: '人员看板', value: BOARD_TYPES.OWNER }
+          ]}
+        />
+      </div>
+
       {/* 时间轴头部 - 月份刻度 */}
       <TimelineHeader 
         timelineParams={timelineParams} 
@@ -233,6 +257,8 @@ function TimelineView({
                 projects={groupedProjects[productLine.id]?.projects || []}
                 timelineParams={timelineParams}
                 onEditProject={onEditProject}
+                boardType={boardType}
+                owners={owners}
               />
             ))
           ) : (

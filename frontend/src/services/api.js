@@ -220,16 +220,85 @@ export async function getSettings() {
 }
 
 /**
- * 更新可见产品线配置
+ * 更新可见产品线设置
  * @param {Array<string>} productLineIds - 产品线ID列表
- * @returns {Promise<Object>} 更新后的设置对象
+ * @returns {Promise<Object>} 更新结果
  */
 export async function updateVisibleProductLines(productLineIds) {
   const data = await fetchWithErrorHandling(`${API_BASE_URL}/settings/visible-productlines`, {
     method: 'PUT',
-    body: JSON.stringify({ productLineIds }),
+    body: JSON.stringify({ visibleProductLines: productLineIds }),
   })
   return data.data
+}
+
+// ==================== 人员相关API ====================
+
+/**
+ * 获取所有人员
+ * @returns {Promise<{owners: Array}>} 人员列表
+ */
+export const getOwners = async () => {
+  const response = await fetch(`${API_BASE_URL}/owners`)
+  if (!response.ok) {
+    throw new Error('获取人员列表失败')
+  }
+  return response.json()
+}
+
+/**
+ * 创建新人员
+ * @param {string} name - 人员姓名
+ * @returns {Promise<Object>} 创建的人员对象
+ */
+export const createOwner = async (name) => {
+  const response = await fetch(`${API_BASE_URL}/owners`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ name })
+  })
+  
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || '创建人员失败')
+  }
+  
+  return response.json()
+}
+
+/**
+ * 删除人员
+ * @param {string} ownerId - 人员ID
+ * @returns {Promise<Object>} 删除结果
+ */
+export const deleteOwner = async (ownerId) => {
+  const response = await fetch(`${API_BASE_URL}/owners/${ownerId}`, {
+    method: 'DELETE'
+  })
+  
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || '删除人员失败')
+  }
+  
+  return response.json()
+}
+
+/**
+ * 获取人员关联的项目数量
+ * @param {string} ownerId - 人员ID
+ * @returns {Promise<{ownerId: string, projectCount: number}>} 项目数量
+ */
+export const getOwnerProjectCount = async (ownerId) => {
+  const response = await fetch(`${API_BASE_URL}/owners/${ownerId}/projects/count`)
+  
+  if (!response.ok) {
+    throw new Error('获取项目数失败')
+  }
+  
+  return response.json()
 }
 
 /**

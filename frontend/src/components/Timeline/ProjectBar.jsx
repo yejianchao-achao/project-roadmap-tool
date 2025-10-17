@@ -1,4 +1,4 @@
-import { STATUS_COLORS, PROJECT_BAR_HEIGHT, PROJECT_BAR_MARGIN } from '../../utils/constants'
+import { STATUS_COLORS, PROJECT_BAR_HEIGHT, PROJECT_BAR_MARGIN, BOARD_TYPES } from '../../utils/constants'
 import { calculateProjectBarPosition } from '../../utils/layoutUtils'
 
 /**
@@ -7,10 +7,22 @@ import { calculateProjectBarPosition } from '../../utils/layoutUtils'
  * @param {object} timelineParams - 时间轴参数
  * @param {number} row - 行号
  * @param {function} onEdit - 编辑回调
+ * @param {string} boardType - 看板类型
+ * @param {array} owners - 人员列表
  */
-function ProjectBar({ project, timelineParams, row, onEdit }) {
+function ProjectBar({ project, timelineParams, row, onEdit, boardType = BOARD_TYPES.STATUS, owners = [] }) {
   const { left, width } = calculateProjectBarPosition(project, timelineParams)
-  const color = STATUS_COLORS[project.status] || '#999'
+  
+  // 根据看板类型选择颜色
+  let color
+  if (boardType === BOARD_TYPES.OWNER) {
+    // 人员看板：根据负责人颜色
+    const owner = owners.find(o => o.id === project.ownerId)
+    color = owner?.color || '#999'
+  } else {
+    // 进度看板：根据状态颜色
+    color = STATUS_COLORS[project.status] || '#999'
+  }
   
   // 暂停状态使用虚线边框
   const isPaused = project.status === '暂停'

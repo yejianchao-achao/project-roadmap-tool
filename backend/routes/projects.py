@@ -67,6 +67,7 @@ def create_project():
         {
             "name": "项目名称",
             "productLineId": "产品线ID",
+            "ownerId": "负责人ID",
             "startDate": "2025-01-01",
             "endDate": "2025-12-31",
             "status": "开发"
@@ -78,7 +79,7 @@ def create_project():
     data = request.get_json()
     
     # 验证必需字段
-    required_fields = ['name', 'productLineId', 'startDate', 'endDate', 'status']
+    required_fields = ['name', 'productLineId', 'ownerId', 'startDate', 'endDate', 'status']
     for field in required_fields:
         if not data or field not in data:
             return jsonify({
@@ -89,6 +90,7 @@ def create_project():
     project = service.create(
         name=data['name'],
         productLineId=data['productLineId'],
+        ownerId=data['ownerId'],
         startDate=data['startDate'],
         endDate=data['endDate'],
         status=data['status']
@@ -113,6 +115,7 @@ def update_project(project_id):
         {
             "name": "新项目名称",
             "productLineId": "新产品线ID",
+            "ownerId": "负责人ID",
             "startDate": "2025-01-01",
             "endDate": "2025-12-31",
             "status": "测试"
@@ -131,7 +134,7 @@ def update_project(project_id):
     
     # 只更新提供的字段
     update_fields = {}
-    allowed_fields = ['name', 'productLineId', 'startDate', 'endDate', 'status']
+    allowed_fields = ['name', 'productLineId', 'ownerId', 'startDate', 'endDate', 'status']
     
     for field in allowed_fields:
         if field in data:

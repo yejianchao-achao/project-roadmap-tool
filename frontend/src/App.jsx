@@ -6,9 +6,10 @@ import TimelineView from './components/Timeline/TimelineView'
 import ProductLineSettings from './components/ProductLineSettings'
 import ProductLineManagement from './components/ProductLineManagement'
 import TimelineSettings from './components/TimelineSettings'
-import { getProjects, getProductLines, getSettings, updateVisibleProductLines } from './services/api'
+import OwnerManagement from './components/OwnerManagement'
+import { getProjects, getProductLines, getSettings, updateVisibleProductLines, getOwners } from './services/api'
 import { loadTimelineSettings, saveTimelineSettings } from './utils/storageUtils'
-import { DEFAULT_VISIBLE_MONTHS } from './utils/constants'
+import { DEFAULT_VISIBLE_MONTHS, BOARD_TYPES } from './utils/constants'
 
 const { Header, Content } = Layout
 
@@ -20,6 +21,13 @@ function App() {
   const [editingProject, setEditingProject] = useState(null)
   const [selectedProductLines, setSelectedProductLines] = useState([])
   const [managementVisible, setManagementVisible] = useState(false)
+  const [ownerManagementVisible, setOwnerManagementVisible] = useState(false)
+  const [owners, setOwners] = useState([])
+  
+  // 看板类型状态（从localStorage读取）
+  const [boardType, setBoardType] = useState(() => {
+    return localStorage.getItem('boardType') || BOARD_TYPES.STATUS
+  })
   
   // 时间轴设置状态
   const [timelineRange, setTimelineRange] = useState(() => {
@@ -44,14 +52,16 @@ function App() {
       setLoading(true)
       
       // 并行加载所有数据
-      const [projectsData, productLinesData, settingsData] = await Promise.all([
+      const [projectsData, productLinesData, settingsData, ownersData] = await Promise.all([
         getProjects(),
         getProductLines(),
-        getSettings()
+        getSettings(),
+        getOwners()
       ])
       
       setProjects(projectsData)
       setProductLines(productLinesData)
+      setOwners(ownersData.owners || [])
       
       // 处理设置数据
       const visibleProductLines = settingsData.visibleProductLines || []
@@ -134,6 +144,27 @@ function App() {
   }
 
   /**
+   * 打开人员管理界面
+   */
+  const handleOpenOwnerManagement = () => {
+    setOwnerManagementVisible(true)
+  }
+
+  /**
+   * 关闭人员管理界面
+   */
+  const handleCloseOwnerManagement = () => {
+    setOwnerManagementVisible(false)
+  }
+
+  /**
+   * 人员管理界面刷新数据
+   */
+  const handleOwnerManagementRefresh = () => {
+    loadData()
+  }
+
+  /**
    * 处理产品线选择变化
    * 自动保存配置
    */
@@ -168,6 +199,15 @@ function App() {
     saveTimelineSettings({ timelineRange, visibleMonths: newVisibleMonths })
   }, [timelineRange])
 
+  /**
+   * 处理看板类型变化
+   */
+  const handleBoardTypeChange = useCallback((newBoardType) => {
+    setBoardType(newBoardType)
+    // 保存到localStorage
+    localStorage.setItem('boardType', newBoardType)
+  }, [])
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Header style={{ 
@@ -195,6 +235,9 @@ function App() {
           <Col xs={24} sm={24} md={6} lg={5} xl={4}>
             <ProductLineSettings
               onOpenManagement={handleOpenManagement}
+              onOpenOwnerManagement={handleOpenOwnerManagement}
+              boardType={boardType}
+              owners={owners}
             />
             
             {/* 时间轴设置 */}
@@ -224,6 +267,9 @@ function App() {
                 onEditProject={handleEditProject}
                 customTimelineRange={timelineRange}
                 visibleMonths={visibleMonths}
+                owners={owners}
+                boardType={boardType}
+                onBoardTypeChange={handleBoardTypeChange}
               />
             </div>
           </Col>
@@ -248,6 +294,13 @@ function App() {
         selectedProductLines={selectedProductLines}
         onRefresh={handleManagementRefresh}
         onVisibilityChange={handleProductLineSelectionChange}
+      />
+
+      {/* 人员管理抽屉 */}
+      <OwnerManagement
+        visible={ownerManagementVisible}
+        onClose={handleCloseOwnerManagement}
+        onRefresh={handleOwnerManagementRefresh}
       />
     </Layout>
   )

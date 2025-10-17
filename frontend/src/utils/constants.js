@@ -76,3 +76,22 @@ export const PROJECT_BAR_MARGIN = 16
  * 泳道标题宽度（像素）
  */
 export const SWIMLANE_LABEL_WIDTH = 150
+
+/**
+ * 人员颜色池（20种高对比度颜色）
+ * 与后端Owner.COLOR_POOL保持一致
+ */
+export const OWNER_COLOR_POOL = [
+  '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+  '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B739', '#52B788',
+  '#E74C3C', '#3498DB', '#9B59B6', '#1ABC9C', '#F39C12',
+  '#E67E22', '#95A5A6', '#34495E', '#16A085', '#27AE60'
+]
+
+/**
+ * 看板类型
+ */
+export const BOARD_TYPES = {
+  STATUS: 'status',  // 进度看板（按状态显示颜色）
+  OWNER: 'owner'     // 人员看板（按负责人显示颜色）
+}
