@@ -26,7 +26,7 @@ class Project:
     VALID_STATUSES = ['规划', '方案', '设计', '开发', '测试', '已上', '暂停']
     
     def __init__(self, name, productLineId, startDate, endDate, status,
-                 ownerId=None, id=None, createdAt=None, updatedAt=None):
+                 ownerId=None, isPending=False, id=None, createdAt=None, updatedAt=None):
         """
         初始化项目对象
         
@@ -37,6 +37,7 @@ class Project:
             endDate: 结束日期（YYYY-MM-DD格式）
             status: 项目状态
             ownerId: 项目负责人ID（必填）
+            isPending: 是否暂定（可选，默认False）
             id: 项目ID（可选，不提供则自动生成）
             createdAt: 创建时间戳（可选，不提供则使用当前时间）
             updatedAt: 更新时间戳（可选，不提供则使用当前时间）
@@ -45,6 +46,7 @@ class Project:
         self.name = name
         self.productLineId = productLineId
         self.ownerId = ownerId  # 新增：项目负责人ID
+        self.isPending = isPending  # 新增：是否暂定
         self.startDate = startDate
         self.endDate = endDate
         self.status = status
@@ -126,6 +128,7 @@ class Project:
             'name': self.name,
             'productLineId': self.productLineId,
             'ownerId': self.ownerId,  # 新增
+            'isPending': self.isPending,  # 新增：是否暂定
             'startDate': self.startDate,
             'endDate': self.endDate,
             'status': self.status,
@@ -151,6 +154,7 @@ class Project:
             endDate=data['endDate'],
             status=data['status'],
             ownerId=data.get('ownerId'),  # 新增，使用get以兼容旧数据
+            isPending=data.get('isPending', False),  # 新增：是否暂定，默认False
             id=data.get('id'),
             createdAt=data.get('createdAt'),
             updatedAt=data.get('updatedAt')
@@ -163,7 +167,7 @@ class Project:
         Args:
             **kwargs: 要更新的属性键值对
         """
-        allowed_fields = ['name', 'productLineId', 'ownerId', 'startDate', 'endDate', 'status']  # 新增ownerId
+        allowed_fields = ['name', 'productLineId', 'ownerId', 'startDate', 'endDate', 'status', 'isPending']  # 新增isPending
         
         for key, value in kwargs.items():
             if key in allowed_fields:

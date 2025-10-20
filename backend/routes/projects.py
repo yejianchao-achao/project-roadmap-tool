@@ -93,7 +93,8 @@ def create_project():
         ownerId=data['ownerId'],
         startDate=data['startDate'],
         endDate=data['endDate'],
-        status=data['status']
+        status=data['status'],
+        isPending=data.get('isPending', False)
     )
     
     return jsonify({
@@ -134,7 +135,7 @@ def update_project(project_id):
     
     # 只更新提供的字段
     update_fields = {}
-    allowed_fields = ['name', 'productLineId', 'ownerId', 'startDate', 'endDate', 'status']
+    allowed_fields = ['name', 'productLineId', 'ownerId', 'startDate', 'endDate', 'status', 'isPending']
     
     for field in allowed_fields:
         if field in data:

@@ -126,7 +126,8 @@
   cursor: pointer;
   transition: all 0.3s;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border-width: 2px;
+  border-width: 3px; /* 增加边框宽度，让虚线更明显 */
+  border-style: solid; /* 默认实线，可被内联样式覆盖 */
   z-index: 1;
   display: flex;
   align-items: center;

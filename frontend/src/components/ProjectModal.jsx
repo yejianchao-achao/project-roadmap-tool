@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Modal, Form, Input, Select, DatePicker, message, Popconfirm, Button, Space, Badge } from 'antd'
+import { Modal, Form, Input, Select, DatePicker, Checkbox, message, Popconfirm, Button, Space, Badge } from 'antd'
 import dayjs from 'dayjs'
 import { PROJECT_STATUSES } from '../utils/constants'
 import { getProductLines, createProductLine, createProject, updateProject, deleteProject, getOwners, createOwner } from '../services/api'
@@ -57,7 +57,8 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
         ownerId: editingProject.ownerId,
         startDate: dayjs(editingProject.startDate),
         endDate: dayjs(editingProject.endDate),
-        status: editingProject.status
+        status: editingProject.status,
+        isPending: editingProject.isPending || false
       })
     } else if (visible) {
       // 创建模式时重置表单
@@ -162,7 +163,8 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
         ownerId: values.ownerId,
         startDate: values.startDate.format('YYYY-MM-DD'),
         endDate: values.endDate.format('YYYY-MM-DD'),
-        status: values.status
+        status: values.status,
+        isPending: values.isPending || false
       }
 
       // 调用API
@@ -444,6 +446,16 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
               </Option>
             ))}
           </Select>
+        </Form.Item>
+
+        {/* 暂定 */}
+        <Form.Item
+          label="暂定"
+          name="isPending"
+          valuePropName="checked"
+          tooltip="勾选表示项目计划尚未确定"
+        >
+          <Checkbox>项目计划暂未确定</Checkbox>
         </Form.Item>
       </Form>
     </Modal>

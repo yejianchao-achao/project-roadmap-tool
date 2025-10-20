@@ -24,8 +24,16 @@ function ProjectBar({ project, timelineParams, row, onEdit, boardType = BOARD_TY
     color = STATUS_COLORS[project.status] || '#999'
   }
   
-  // 暂停状态使用虚线边框
+  // 边框样式：暂定项目使用虚线
+  const isPending = project.isPending || false
+  const borderStyle = isPending ? 'dashed' : 'solid'
+  
+  // 边框颜色：暂定项目使用黑色，让虚线更明显
+  const borderColor = isPending ? '#000' : color
+  
+  // 填充颜色：暂停状态特殊处理
   const isPaused = project.status === '暂停'
+  const backgroundColor = isPaused ? '#f5f5f5' : color
   
   // 计算垂直位置：顶部间距 + 行号 * (块高度 + 间距)
   const top = PROJECT_BAR_MARGIN + row * (PROJECT_BAR_HEIGHT + PROJECT_BAR_MARGIN)
@@ -36,17 +44,17 @@ function ProjectBar({ project, timelineParams, row, onEdit, boardType = BOARD_TY
 
   return (
     <div
-      className={`project-bar ${isPaused ? 'project-bar-paused' : ''}`}
+      className="project-bar"
       style={{
         left: `${left}px`,
         width: `${width}px`,
         top: `${top}px`,
-        backgroundColor: isPaused ? '#f5f5f5' : color,
-        borderColor: color,
-        borderStyle: isPaused ? 'dashed' : 'solid'
+        backgroundColor: backgroundColor,
+        borderColor: borderColor,
+        borderStyle: borderStyle
       }}
       onClick={handleClick}
-      title={`${project.name}\n${project.startDate} ~ ${project.endDate}\n状态: ${project.status}`}
+      title={`${project.name}\n${project.startDate} ~ ${project.endDate}\n状态: ${project.status}${isPending ? '\n(暂定)' : ''}`}
     >
       <div className="project-bar-content">
         <span className="project-name">{project.name}</span>
