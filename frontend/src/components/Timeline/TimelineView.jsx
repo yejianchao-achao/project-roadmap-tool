@@ -219,11 +219,12 @@ function TimelineView({
         alignItems: 'center'
       }}>
         <Segmented
-          value={boardType}
-          onChange={onBoardTypeChange}
+          value={boardType === BOARD_TYPES.STATUS ? 'timeline-status' : boardType === BOARD_TYPES.OWNER ? 'timeline-owner' : 'calendar'}
+          onChange={(value) => onBoardTypeChange(value)}
           options={[
-            { label: '进度看板', value: BOARD_TYPES.STATUS },
-            { label: '人员看板', value: BOARD_TYPES.OWNER }
+            { label: '进度看板', value: 'timeline-status' },
+            { label: '人员看板', value: 'timeline-owner' },
+            { label: '日历看板', value: 'calendar' }
           ]}
         />
       </div>

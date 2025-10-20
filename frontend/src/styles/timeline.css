@@ -156,7 +156,7 @@
 .project-name {
   font-size: 13px;
   font-weight: 500;
-  color: #fff;
+  color: #000;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -168,7 +168,7 @@
 
 .project-dates {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.9);
+  color: #262626;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

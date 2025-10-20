@@ -3,6 +3,7 @@ import { Layout, Button, message, Row, Col } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import ProjectModal from './components/ProjectModal'
 import TimelineView from './components/Timeline/TimelineView'
+import CalendarView from './components/Calendar/CalendarView'
 import ProductLineSettings from './components/ProductLineSettings'
 import ProductLineManagement from './components/ProductLineManagement'
 import TimelineSettings from './components/TimelineSettings'
@@ -10,6 +11,7 @@ import OwnerManagement from './components/OwnerManagement'
 import { getProjects, getProductLines, getSettings, updateVisibleProductLines, getOwners } from './services/api'
 import { loadTimelineSettings, saveTimelineSettings } from './utils/storageUtils'
 import { DEFAULT_VISIBLE_MONTHS, BOARD_TYPES } from './utils/constants'
+import './styles/calendar.css'
 
 const { Header, Content } = Layout
 
@@ -24,9 +26,10 @@ function App() {
   const [ownerManagementVisible, setOwnerManagementVisible] = useState(false)
   const [owners, setOwners] = useState([])
   
-  // 看板类型状态（从localStorage读取）
-  const [boardType, setBoardType] = useState(() => {
-    return localStorage.getItem('boardType') || BOARD_TYPES.STATUS
+  // 视图类型状态（从localStorage读取）
+  // 'timeline-status' | 'timeline-owner' | 'calendar'
+  const [viewType, setViewType] = useState(() => {
+    return localStorage.getItem('viewType') || 'timeline-status'
   })
   
   // 时间轴设置状态
@@ -43,6 +46,13 @@ function App() {
   useEffect(() => {
     loadData()
   }, [])
+
+  /**
+   * 保存viewType到localStorage
+   */
+  useEffect(() => {
+    localStorage.setItem('viewType', viewType)
+  }, [viewType])
 
   /**
    * 加载项目、产品线和设置数据
@@ -200,12 +210,11 @@ function App() {
   }, [timelineRange])
 
   /**
-   * 处理看板类型变化
+   * 处理视图类型变化
+   * 统一处理时间轴看板和日历看板的切换
    */
-  const handleBoardTypeChange = useCallback((newBoardType) => {
-    setBoardType(newBoardType)
-    // 保存到localStorage
-    localStorage.setItem('boardType', newBoardType)
+  const handleViewTypeChange = useCallback((newViewType) => {
+    setViewType(newViewType)
   }, [])
 
   return (
@@ -236,7 +245,7 @@ function App() {
             <ProductLineSettings
               onOpenManagement={handleOpenManagement}
               onOpenOwnerManagement={handleOpenOwnerManagement}
-              boardType={boardType}
+              boardType={viewType === 'timeline-status' ? BOARD_TYPES.STATUS : BOARD_TYPES.OWNER}
               owners={owners}
             />
             
@@ -250,7 +259,7 @@ function App() {
             />
           </Col>
 
-          {/* 右侧时间轴 */}
+          {/* 右侧内容区域 */}
           <Col xs={24} sm={24} md={18} lg={19} xl={20}>
             <div style={{ 
               background: '#fff', 
@@ -259,18 +268,29 @@ function App() {
               minHeight: '600px',
               height: 'calc(100vh - 120px)'
             }}>
-              {/* 时间轴视图 */}
-              <TimelineView
-                projects={projects}
-                productLines={productLines}
-                selectedProductLines={selectedProductLines}
-                onEditProject={handleEditProject}
-                customTimelineRange={timelineRange}
-                visibleMonths={visibleMonths}
-                owners={owners}
-                boardType={boardType}
-                onBoardTypeChange={handleBoardTypeChange}
-              />
+              {/* 条件渲染：日历视图或时间轴视图 */}
+              {viewType === 'calendar' ? (
+                <CalendarView
+                  projects={projects}
+                  productLines={productLines}
+                  selectedProductLines={selectedProductLines}
+                  onEditProject={handleEditProject}
+                  owners={owners}
+                  onViewTypeChange={handleViewTypeChange}
+                />
+              ) : (
+                <TimelineView
+                  projects={projects}
+                  productLines={productLines}
+                  selectedProductLines={selectedProductLines}
+                  onEditProject={handleEditProject}
+                  customTimelineRange={timelineRange}
+                  visibleMonths={visibleMonths}
+                  owners={owners}
+                  boardType={viewType === 'timeline-status' ? BOARD_TYPES.STATUS : BOARD_TYPES.OWNER}
+                  onBoardTypeChange={handleViewTypeChange}
+                />
+              )}
             </div>
           </Col>
         </Row>
