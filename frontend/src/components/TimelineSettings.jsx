@@ -1,4 +1,4 @@
-import { Card, Radio, DatePicker, Button, Space, message } from 'antd'
+import { Card, Radio, DatePicker, Button, Space, message, Slider } from 'antd'
 import { ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons'
 import { useState, useEffect, useCallback } from 'react'
 import dayjs from 'dayjs'
@@ -10,19 +10,25 @@ const { RangePicker } = DatePicker
 
 /**
  * 时间轴设置组件
- * 提供时间范围设置和缩放控制功能
+ * 提供时间范围设置、缩放控制和单月宽度调整功能
  * @param {Array} projects - 项目列表
  * @param {Object} currentRange - 当前时间范围 { type, customRange }
  * @param {Function} onRangeChange - 时间范围变化回调
  * @param {Number} visibleMonths - 当前缩放级别
  * @param {Function} onZoomChange - 缩放变化回调
+ * @param {Number} monthWidth - 单月宽度（像素）
+ * @param {Function} onMonthWidthChange - 单月宽度变化回调
+ * @param {Function} onMonthWidthReset - 重置单月宽度回调
  */
 function TimelineSettings({ 
   projects, 
   currentRange, 
   onRangeChange, 
   visibleMonths, 
-  onZoomChange 
+  onZoomChange,
+  monthWidth = 150,
+  onMonthWidthChange,
+  onMonthWidthReset
 }) {
   // 状态管理
   const [rangeType, setRangeType] = useState(currentRange.type)
@@ -148,6 +154,27 @@ function TimelineSettings({
   }, [visibleMonths, onZoomChange])
 
   /**
+   * 处理单月宽度滑块变化
+   */
+  const handleMonthWidthSliderChange = useCallback((value) => {
+    onMonthWidthChange(value)
+  }, [onMonthWidthChange])
+
+  /**
+   * 处理单月宽度滑块释放后
+   */
+  const handleMonthWidthAfterChange = useCallback((value) => {
+    message.success('单月宽度已更新')
+  }, [])
+
+  /**
+   * 处理重置单月宽度
+   */
+  const handleResetMonthWidth = useCallback(() => {
+    onMonthWidthReset()
+  }, [onMonthWidthReset])
+
+  /**
    * 禁用未来日期（可选，根据需求调整）
    */
   const disabledDate = (current) => {
@@ -230,6 +257,27 @@ function TimelineSettings({
           title="显示更少月份"
           size="small"
         />
+      </div>
+
+      {/* 单月宽度控制 */}
+      <div className="month-width-control">
+        <div className="control-label">单月宽度</div>
+        <Slider
+          min={100}
+          max={500}
+          value={monthWidth}
+          onChange={handleMonthWidthSliderChange}
+          onAfterChange={handleMonthWidthAfterChange}
+          tooltip={{ formatter: (value) => `${value}px` }}
+        />
+        <div className="width-display">{monthWidth}px</div>
+        <Button 
+          onClick={handleResetMonthWidth}
+          size="small"
+          block
+        >
+          重置为默认
+        </Button>
       </div>
     </Card>
   )

@@ -94,9 +94,39 @@
 }
 
 .zoom-controls .zoom-level {
-  min-width: 60px;
-  text-align: center;
+  margin: 0 8px;
   font-size: 14px;
   color: #595959;
+  min-width: 50px;
+  text-align: center;
+}
+
+/* 单月宽度控制区域 */
+.month-width-control {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.month-width-control .control-label {
   font-weight: 500;
+  margin-bottom: 12px;
+  color: #262626;
+  font-size: 14px;
+}
+
+.month-width-control .ant-slider {
+  margin-bottom: 8px;
+}
+
+.month-width-control .width-display {
+  text-align: center;
+  font-size: 14px;
+  color: #1890ff;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.month-width-control .ant-btn {
+  width: 100%;
 }

@@ -20,6 +20,7 @@ import '../../styles/timeline.css'
  * @param {array} owners - 人员列表
  * @param {string} boardType - 看板类型（'status' | 'owner'）
  * @param {function} onBoardTypeChange - 看板类型变化回调
+ * @param {number} monthWidth - 单月宽度（像素），默认150px
  */
 function TimelineView({ 
   projects, 
@@ -30,7 +31,8 @@ function TimelineView({
   visibleMonths,
   owners = [],
   boardType = BOARD_TYPES.STATUS,
-  onBoardTypeChange
+  onBoardTypeChange,
+  monthWidth = 150
 }) {
   const [timelineParams, setTimelineParams] = useState(null)
   const [groupedProjects, setGroupedProjects] = useState({})
@@ -39,6 +41,7 @@ function TimelineView({
 
   /**
    * 计算时间轴参数和分组项目（统一计算 pixelsPerDay）
+   * 使用 monthWidth 动态计算 pixelsPerDay
    */
   useEffect(() => {
     // 使用自定义时间范围计算参数（如果提供）
@@ -53,23 +56,9 @@ function TimelineView({
     const grouped = groupProjectsByProductLine(projects, productLines)
     setGroupedProjects(grouped)
     
-    // 如果 scrollContainerRef 还未准备好，先设置基础参数
-    if (!scrollContainerRef.current) {
-      // 使用默认值先渲染，等 ref 准备好后再更新
-      const avgDaysPerMonth = 30
-      const defaultPixelsPerDay = 1200 / (visibleMonths * avgDaysPerMonth) // 假设默认宽度1200px
-      setTimelineParams({
-        ...params,
-        pixelsPerDay: defaultPixelsPerDay,
-        totalWidth: params.totalDays * defaultPixelsPerDay
-      })
-      return
-    }
-
-    // 动态计算 pixelsPerDay
-    // 关键：pixelsPerDay 应该是固定的，不应该基于 visibleMonths
-    // 而应该基于一个合理的显示密度（例如每天5像素）
-    const pixelsPerDay = 5 // 固定值，每天5像素
+    // 从单月宽度计算每天像素数
+    // 假设每月30天，pixelsPerDay = monthWidth / 30
+    const pixelsPerDay = monthWidth / 30
     
     // totalWidth 基于实际的时间轴总天数
     const totalWidth = params.totalDays * pixelsPerDay
@@ -80,7 +69,7 @@ function TimelineView({
       pixelsPerDay,
       totalWidth
     })
-  }, [projects, productLines, customTimelineRange, visibleMonths, scrollContainerRef.current?.offsetWidth])
+  }, [projects, productLines, customTimelineRange, monthWidth])
 
   /**
    * 监听窗口大小变化，触发重新计算

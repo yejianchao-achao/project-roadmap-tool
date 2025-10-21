@@ -43,6 +43,23 @@ function App() {
     return saved?.visibleMonths || DEFAULT_VISIBLE_MONTHS
   })
 
+  // 单月宽度状态（从localStorage读取，默认150px）
+  const [monthWidth, setMonthWidth] = useState(() => {
+    try {
+      const saved = localStorage.getItem('timeline_month_width')
+      if (saved) {
+        const { monthWidth } = JSON.parse(saved)
+        // 验证范围（100-500px）
+        if (monthWidth >= 100 && monthWidth <= 500) {
+          return monthWidth
+        }
+      }
+    } catch (error) {
+      console.error('读取单月宽度设置失败:', error)
+    }
+    return 150 // 默认值
+  })
+
   useEffect(() => {
     loadData()
   }, [])
@@ -210,6 +227,28 @@ function App() {
   }, [timelineRange])
 
   /**
+   * 处理单月宽度变化
+   * @param {number} newWidth - 新的单月宽度（像素）
+   */
+  const handleMonthWidthChange = useCallback((newWidth) => {
+    setMonthWidth(newWidth)
+    // 保存到localStorage
+    try {
+      localStorage.setItem('timeline_month_width', JSON.stringify({ monthWidth: newWidth }))
+    } catch (error) {
+      console.error('保存单月宽度设置失败:', error)
+    }
+  }, [])
+
+  /**
+   * 重置单月宽度为默认值
+   */
+  const handleMonthWidthReset = useCallback(() => {
+    handleMonthWidthChange(150)
+    message.success('已重置为默认宽度')
+  }, [handleMonthWidthChange])
+
+  /**
    * 处理视图类型变化
    * 统一处理时间轴看板和日历看板的切换
    */
@@ -256,6 +295,9 @@ function App() {
               onRangeChange={handleRangeChange}
               visibleMonths={visibleMonths}
               onZoomChange={handleZoomChange}
+              monthWidth={monthWidth}
+              onMonthWidthChange={handleMonthWidthChange}
+              onMonthWidthReset={handleMonthWidthReset}
             />
           </Col>
 
@@ -289,6 +331,7 @@ function App() {
                   owners={owners}
                   boardType={viewType === 'timeline-status' ? BOARD_TYPES.STATUS : BOARD_TYPES.OWNER}
                   onBoardTypeChange={handleViewTypeChange}
+                  monthWidth={monthWidth}
                 />
               )}
             </div>
