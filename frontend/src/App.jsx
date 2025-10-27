@@ -26,6 +26,12 @@ function App() {
   const [ownerManagementVisible, setOwnerManagementVisible] = useState(false)
   const [owners, setOwners] = useState([])
   
+  // 左侧设置面板展开/收起状态（从localStorage读取）
+  const [settingsPanelCollapsed, setSettingsPanelCollapsed] = useState(() => {
+    const saved = localStorage.getItem('settings_panel_collapsed')
+    return saved === 'true'
+  })
+  
   // 视图类型状态（从localStorage读取）
   // 'timeline-status' | 'timeline-owner' | 'calendar'
   const [viewType, setViewType] = useState(() => {
@@ -70,6 +76,13 @@ function App() {
   useEffect(() => {
     localStorage.setItem('viewType', viewType)
   }, [viewType])
+
+  /**
+   * 保存settingsPanelCollapsed到localStorage
+   */
+  useEffect(() => {
+    localStorage.setItem('settings_panel_collapsed', settingsPanelCollapsed)
+  }, [settingsPanelCollapsed])
 
   /**
    * 加载项目、产品线和设置数据
@@ -256,6 +269,13 @@ function App() {
     setViewType(newViewType)
   }, [])
 
+  /**
+   * 切换设置面板展开/收起状态
+   */
+  const toggleSettingsPanel = useCallback(() => {
+    setSettingsPanelCollapsed(prev => !prev)
+  }, [])
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Header style={{ 
@@ -280,35 +300,68 @@ function App() {
       <Content style={{ padding: '24px', background: '#f0f2f5' }}>
         <Row gutter={16}>
           {/* 左侧设置面板 */}
-          <Col xs={24} sm={24} md={6} lg={5} xl={4}>
-            <ProductLineSettings
-              onOpenManagement={handleOpenManagement}
-              onOpenOwnerManagement={handleOpenOwnerManagement}
-              boardType={viewType === 'timeline-status' ? BOARD_TYPES.STATUS : BOARD_TYPES.OWNER}
-              owners={owners}
-            />
-            
-            {/* 时间轴设置 */}
-            <TimelineSettings
-              projects={projects}
-              currentRange={timelineRange}
-              onRangeChange={handleRangeChange}
-              visibleMonths={visibleMonths}
-              onZoomChange={handleZoomChange}
-              monthWidth={monthWidth}
-              onMonthWidthChange={handleMonthWidthChange}
-              onMonthWidthReset={handleMonthWidthReset}
-            />
+          <Col 
+            xs={24} 
+            sm={24} 
+            md={6} 
+            lg={5} 
+            xl={4}
+            style={{ 
+              transition: 'all 0.3s ease',
+              ...(settingsPanelCollapsed && {
+                flex: '0 0 84px',
+                maxWidth: '84px'
+              })
+            }}
+          >
+            <div style={{ position: 'relative' }}>
+              <ProductLineSettings
+                onOpenManagement={handleOpenManagement}
+                onOpenOwnerManagement={handleOpenOwnerManagement}
+                boardType={viewType === 'timeline-status' ? BOARD_TYPES.STATUS : BOARD_TYPES.OWNER}
+                owners={owners}
+                collapsed={settingsPanelCollapsed}
+                onToggleCollapse={toggleSettingsPanel}
+              />
+              
+              {/* 时间轴设置 - 收起时隐藏 */}
+              {!settingsPanelCollapsed && (
+                <TimelineSettings
+                  projects={projects}
+                  currentRange={timelineRange}
+                  onRangeChange={handleRangeChange}
+                  visibleMonths={visibleMonths}
+                  onZoomChange={handleZoomChange}
+                  monthWidth={monthWidth}
+                  onMonthWidthChange={handleMonthWidthChange}
+                  onMonthWidthReset={handleMonthWidthReset}
+                />
+              )}
+            </div>
           </Col>
 
           {/* 右侧内容区域 */}
-          <Col xs={24} sm={24} md={18} lg={19} xl={20}>
+          <Col 
+            xs={24} 
+            sm={24} 
+            md={18} 
+            lg={19} 
+            xl={20}
+            style={{ 
+              transition: 'all 0.3s ease',
+              ...(settingsPanelCollapsed && {
+                flex: '1 1 auto',
+                maxWidth: 'calc(100% - 84px - 16px)'
+              })
+            }}
+          >
             <div style={{ 
               background: '#fff', 
               padding: '24px', 
               borderRadius: '8px',
               minHeight: '600px',
-              height: 'calc(100vh - 120px)'
+              maxHeight: 'calc(100vh - 120px)',
+              overflow: 'auto'
             }}>
               {/* 条件渲染：日历视图或时间轴视图 */}
               {viewType === 'calendar' ? (
