@@ -90,6 +90,51 @@ export function generateWeekGridLines(timelineParams) {
 }
 
 /**
+ * 计算“今天”在时间轴上的像素偏移位置
+ * 用于绘制今日红线，若今天不在时间范围内则返回null
+ * @param {Object} timelineParams - 时间轴参数 { minDate, maxDate, pixelsPerDay }
+ * @returns {number|null} 今日偏移像素（相对minDate），或null（超出范围）
+ */
+export function generateTodayOffset(timelineParams) {
+  const { minDate, maxDate, pixelsPerDay } = timelineParams
+  const today = dayjs()
+  if (today.isBefore(minDate) || today.isAfter(maxDate)) {
+    return null
+  }
+  const daysFromStart = today.diff(minDate, 'day')
+  return daysFromStart * pixelsPerDay
+}
+
+/**
+ * 计算“本周阴影”在时间轴上的渲染范围
+ * 起点为本周开始（周日），宽度为7天；并进行边界裁剪以适配时间范围
+ * @param {Object} timelineParams - 时间轴参数 { minDate, maxDate, pixelsPerDay, totalWidth }
+ * @returns {{left:number, width:number}|null} 本周阴影的left与width，或null（不在范围）
+ */
+export function generateCurrentWeekHighlightRange(timelineParams) {
+  const { minDate, maxDate, pixelsPerDay, totalWidth } = timelineParams
+  const weekStart = dayjs().startOf('week')
+  const weekEnd = weekStart.add(7, 'day')
+
+  // 如果整周在可视范围外，返回null
+  if (weekEnd.isBefore(minDate) || weekStart.isAfter(maxDate)) {
+    return null
+  }
+
+  // 计算起点与终点相对minDate的像素位置
+  const startDays = Math.max(0, weekStart.diff(minDate, 'day'))
+  const endDays = Math.min(maxDate.diff(minDate, 'day'), weekEnd.diff(minDate, 'day'))
+
+  const left = startDays * pixelsPerDay
+  const width = Math.max(0, (endDays - startDays) * pixelsPerDay)
+  // 额外安全裁剪，避免越界
+  const clampedLeft = Math.max(0, Math.min(left, totalWidth))
+  const clampedWidth = Math.max(0, Math.min(width, totalWidth - clampedLeft))
+
+  return { left: clampedLeft, width: clampedWidth }
+}
+
+/**
  * 格式化日期为显示文本
  * @param {string} dateStr - 日期字符串 (YYYY-MM-DD)
  * @returns {string} 格式化后的日期文本

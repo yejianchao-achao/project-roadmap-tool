@@ -70,6 +70,13 @@
   z-index: 0;
 }
 
+.week-highlight {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(24, 144, 255, 0.12); /* 半透明本周背景 */
+}
+
 .week-line {
   position: absolute;
   top: 0;
@@ -176,6 +183,26 @@
 
 .project-bar-paused .project-dates {
   color: #8c8c8c;
+}
+
+/* 今日指示线叠加层 */
+.timeline-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 3; /* 高于项目块，确保清晰可见 */
+}
+
+.today-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: #ff4d4f; /* 红色（Ant Design红） */
+  box-shadow: 0 0 0 1px rgba(255, 77, 79, 0.2);
 }
 
 /* 空状态 */

@@ -209,7 +209,7 @@ function OwnerManagement({ visible, onClose, onRefresh }) {
       width={600}
       onClose={onClose}
       open={visible}
-      destroyOnClose
+        destroyOnHidden
     >
       {/* 新建人员区域 */}
       <div style={{ marginBottom: 16 }}>

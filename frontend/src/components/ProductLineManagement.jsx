@@ -409,7 +409,7 @@ function ProductLineManagement({
       width={800}
       onClose={onClose}
       open={visible}
-      destroyOnClose
+        destroyOnHidden
     >
       {/* 新建产品线区域 */}
       <div style={{ marginBottom: 16 }}>

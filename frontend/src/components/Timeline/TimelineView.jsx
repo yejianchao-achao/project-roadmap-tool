@@ -3,6 +3,7 @@ import { Spin, Segmented } from 'antd'
 import dayjs from 'dayjs'
 import TimelineHeader from './TimelineHeader'
 import TimelineGrid from './TimelineGrid'
+import TimelineOverlay from './TimelineOverlay'
 import Swimlane from './Swimlane'
 import { calculateTimelineParams, calculateCustomTimelineParams } from '../../utils/dateUtils'
 import { groupProjectsByProductLine } from '../../utils/layoutUtils'
@@ -237,6 +238,9 @@ function TimelineView({
         >
           {/* 背景网格 - 周刻度 */}
           <TimelineGrid timelineParams={timelineParams} />
+
+          {/* 今日指示线叠加层 */}
+          <TimelineOverlay timelineParams={timelineParams} />
 
           {/* 产品线泳道 */}
           {visibleProductLines.length > 0 ? (

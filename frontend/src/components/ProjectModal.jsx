@@ -253,7 +253,7 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
       width={600}
       okText="确定"
       cancelText="取消"
-      destroyOnClose
+        destroyOnHidden
       footer={[
         isEditMode && (
           <Popconfirm
