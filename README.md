@@ -96,6 +96,8 @@
 ├── data/                      # 数据文件
 │   ├── projects.json         # 项目数据
 │   └── productlines.json     # 产品线数据
+├── scripts/                  # 部署脚本
+│   └── deploy_cloud.sh       # 云主机一键部署
 └── docs/                      # 项目文档
     └── 项目路线图工具/
         ├── ALIGNMENT_项目路线图工具.md      # 需求对齐
@@ -313,6 +315,44 @@ npm run dev
 - 将 `Modal` 组件的弃用属性 `destroyOnClose` 全量替换为 `destroyOnHidden`（Antd 5.25+），消除控制台警告并保持原有行为。
 - 涉及组件：`ProjectModal.jsx`、`ProductLineManagement.jsx`、`OwnerManagement.jsx`
 
+#### 11. 部署脚本增强 ✅
+- 脚本 `scripts/deploy_cloud.sh` 集成以下能力：
+  - 前端构建与上传：`DEPLOY_FRONTEND=1` 自动执行本地构建并上传到远程 `frontend_dist/`；支持配置 `FRONTEND_DIR`、`FRONTEND_BUILD_CMD`、`REMOTE_FRONTEND_DIR`。
+  - 后端重启与健康检查：`RESTART_BACKEND=1` 自动执行 `systemctl restart <服务名>`，并通过 `HEALTHCHECK_URL` 进行 HTTP 状态校验（需远程安装 `curl`）。
+  - 安全同步：始终备份远程 `data`，排除 `data/`、`backup/`、`venv/`、`frontend_dist/`，避免误删与数据覆盖。
+- 配置示例已更新：`.env.deploy.example` 新增相关变量；实际 `.env.deploy` 已启用并验证成功。
+- 验证结果：
+  - 远程备份生成 `backup/data-<timestamp>.tgz`；
+  - 前端产物时间戳为最新构建；
+  - 后端服务重启成功，健康检查返回 `HTTP 200`。
+
+## ☁️ 一键部署（云主机）
+
+- 脚本位置：`scripts/deploy_cloud.sh`；依赖 `rsync`、`ssh`、`tar`；可选 `curl`（远程健康检查）。
+- 支持功能：代码同步、远程数据备份、前端构建与上传（可选）、后端重启与健康检查（可选）。
+
+### 配置
+- 复制 `.env.deploy.example` 为 `.env.deploy` 并填写必填变量：
+  - `SSH_HOST`、`SSH_USER`、`REMOTE_DIR`、`REMOTE_DATA_DIR`
+- 可选变量：
+  - `SSH_PORT`、`BACKUP_DIR`、`DEPLOY_FRONTEND`、`FRONTEND_DIR`、`FRONTEND_BUILD_CMD`、`LOCAL_FRONTEND_DIST`、`REMOTE_FRONTEND_DIR`、`RESTART_BACKEND`、`BACKEND_SERVICE`、`HEALTHCHECK_URL`、`EXCLUDES`、`DRY_RUN`
+
+### 使用
+- 干跑演示（不实际执行同步）：
+  - `DRY_RUN=1 bash scripts/deploy_cloud.sh`
+- 正式部署：
+  - `bash scripts/deploy_cloud.sh`
+
+### 验收
+- 远程备份生成于 `backup/data-<timestamp>.tgz`。
+- 前端产物已上传至 `REMOTE_FRONTEND_DIR`（启用 `DEPLOY_FRONTEND=1` 时）。
+- 后端服务为 active 且健康检查返回 `HTTP 200`（启用 `RESTART_BACKEND=1` 时）。
+
+### 常见问题
+- 缺少必要配置：检查 `.env.deploy` 中必填变量是否为空。
+- 远程未安装 `curl`：脚本会跳过 HTTP 健康检查。
+- 权限或所有者问题：确保 `REMOTE_DIR` 可写且 `systemd` 服务名正确。
+
 ### 优化成果
 - **新增文件**: 9个（3个后端 + 4个前端 + 2个样式）
 - **修改文件**: 15+个
@@ -497,6 +537,37 @@ DELETE /api/projects/:id
 - **自适应宽度需求/** - 响应式布局文档
 - **时间轴看板同步滚动修复/** - 滚动优化文档
 - **时间轴头部滚动同步问题/** - CSS优化文档
+
+### 部署与运维文档
+- **云主机代码更新/**（位于 `docs/云主机代码更新/`）
+  - ALIGNMENT｜对齐需求与范围
+  - CONSENSUS｜共识与验收标准
+  - DESIGN｜方案设计与架构图
+  - TASK｜任务拆分与依赖图
+  - ACCEPTANCE｜执行记录与核验
+  - FINAL｜总结与使用说明
+
+#### 云主机代码更新（操作指引）
+- 复制 `.env.deploy.example` 为 `.env.deploy` 并填写：`SSH_HOST`、`SSH_USER`、`SSH_PORT`、`REMOTE_DIR`、`REMOTE_DATA_DIR`、`BACKUP_DIR`。
+- 可选：将 `DRY_RUN=1` 进行演示运行。
+- 执行部署：`bash scripts/deploy_cloud.sh`
+- 行为说明：
+  - 部署前自动在云主机备份 `data` 到 `backup/data-<timestamp>.tgz`
+  - 使用 `rsync` 同步代码，严格排除 `data/`，保留云端数据不变
+
+##### 前端产物集成（可选）
+- 设置 `DEPLOY_FRONTEND=1` 可在部署脚本中自动执行本地前端构建并上传产物；默认关闭。
+- 可配置项：`FRONTEND_DIR`（默认 `frontend`）、`FRONTEND_BUILD_CMD`（默认 `npm run build`）、`REMOTE_FRONTEND_DIR`（默认 `${REMOTE_DIR}/frontend_dist`）。
+- 执行命令不变：`bash scripts/deploy_cloud.sh`。
+- 行为：在本地构建到 `frontend/dist/` 后，使用 `rsync --delete` 上传至云主机 `frontend_dist/`，确保产物最新且清理旧文件。
+- 建议首次使用 `DRY_RUN=1` 进行演示，确认差异后再实际执行。
+
+##### 后端服务重启与健康检查（可选）
+- 设置 `RESTART_BACKEND=1` 可在部署完成后自动重启 systemd 服务并进行健康检查；默认关闭。
+- 可配置项：`BACKEND_SERVICE`（默认 `project-roadmap`）、`HEALTHCHECK_URL`（默认 `http://127.0.0.1:5000/api/projects`）。
+- 行为：执行 `systemctl restart <服务名>` 后打印 `systemctl status` 前若干行；如远程安装了 `curl`，会请求健康检查URL并输出HTTP状态码。
+- 建议：如生产环境不暴露健康检查接口，可将 `HEALTHCHECK_URL` 指向一个内部可访问的API路径。
+
 
 每个优化任务都包含完整的6A工作流文档（ALIGNMENT、CONSENSUS、DESIGN、TASK、ACCEPTANCE、FINAL）
 
