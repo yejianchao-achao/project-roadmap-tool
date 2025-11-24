@@ -42,7 +42,7 @@ class ProjectService:
                 return project
         return None
     
-    def create(self, name, productLineId, ownerId, startDate, endDate, status, isPending=False):
+    def create(self, name, productLineId, ownerId, startDate, endDate, status, isPending=False, remarks=''):
         """
         创建新项目
         
@@ -54,6 +54,7 @@ class ProjectService:
             endDate: 结束日期（YYYY-MM-DD）
             status: 项目状态
             isPending: 是否为暂定项目（默认False）
+            remarks: 项目备注（默认''，最大500字符）
             
         Returns:
             dict: 创建的项目数据
@@ -69,7 +70,8 @@ class ProjectService:
             startDate=startDate,
             endDate=endDate,
             status=status,
-            isPending=isPending
+            isPending=isPending,
+            remarks=remarks
         )
         
         # 读取现有数据

@@ -70,7 +70,9 @@ def create_project():
             "ownerId": "负责人ID",
             "startDate": "2025-01-01",
             "endDate": "2025-12-31",
-            "status": "开发"
+            "status": "开发",
+            "isPending": false,
+            "remarks": "项目备注（可选）"
         }
     
     Returns:
@@ -94,7 +96,8 @@ def create_project():
         startDate=data['startDate'],
         endDate=data['endDate'],
         status=data['status'],
-        isPending=data.get('isPending', False)
+        isPending=data.get('isPending', False),
+        remarks=data.get('remarks', '')
     )
     
     return jsonify({
@@ -119,7 +122,9 @@ def update_project(project_id):
             "ownerId": "负责人ID",
             "startDate": "2025-01-01",
             "endDate": "2025-12-31",
-            "status": "测试"
+            "status": "测试",
+            "isPending": false,
+            "remarks": "项目备注（可选）"
         }
     
     Returns:
@@ -135,7 +140,7 @@ def update_project(project_id):
     
     # 只更新提供的字段
     update_fields = {}
-    allowed_fields = ['name', 'productLineId', 'ownerId', 'startDate', 'endDate', 'status', 'isPending']
+    allowed_fields = ['name', 'productLineId', 'ownerId', 'startDate', 'endDate', 'status', 'isPending', 'remarks']
     
     for field in allowed_fields:
         if field in data:

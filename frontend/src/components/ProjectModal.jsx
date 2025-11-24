@@ -5,6 +5,7 @@ import { PROJECT_STATUSES } from '../utils/constants'
 import { getProductLines, createProductLine, createProject, updateProject, deleteProject, getOwners, createOwner } from '../services/api'
 
 const { Option } = Select
+const { TextArea } = Input
 
 /**
  * 项目创建/编辑表单组件
@@ -58,7 +59,8 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
         startDate: dayjs(editingProject.startDate),
         endDate: dayjs(editingProject.endDate),
         status: editingProject.status,
-        isPending: editingProject.isPending || false
+        isPending: editingProject.isPending || false,
+        remarks: editingProject.remarks || ''
       })
     } else if (visible) {
       // 创建模式时重置表单
@@ -164,7 +166,8 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
         startDate: values.startDate.format('YYYY-MM-DD'),
         endDate: values.endDate.format('YYYY-MM-DD'),
         status: values.status,
-        isPending: values.isPending || false
+        isPending: values.isPending || false,
+        remarks: values.remarks ? values.remarks.trim() : ''
       }
 
       // 调用API
@@ -456,6 +459,22 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
           tooltip="勾选表示项目计划尚未确定"
         >
           <Checkbox>项目计划暂未确定</Checkbox>
+        </Form.Item>
+
+        {/* 项目备注 */}
+        <Form.Item
+          label="项目备注"
+          name="remarks"
+          rules={[
+            { max: 500, message: '项目备注不能超过500个字符' }
+          ]}
+        >
+          <TextArea
+            placeholder="请输入项目备注（可选）"
+            rows={4}
+            maxLength={500}
+            showCount
+          />
         </Form.Item>
       </Form>
     </Modal>
