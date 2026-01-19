@@ -26,7 +26,7 @@ class Owner:
         '#E67E22', '#95A5A6', '#34495E', '#16A085', '#27AE60'
     ]
     
-    def __init__(self, name, id=None, color=None, createdAt=None):
+    def __init__(self, name, id=None, color=None, createdAt=None, visible=True):
         """
         初始化人员对象
         
@@ -35,11 +35,13 @@ class Owner:
             id: 人员ID（可选，不提供则自动生成）
             color: 颜色（可选，不提供则在服务层分配）
             createdAt: 创建时间戳（可选，不提供则使用当前时间）
+            visible: 是否可见（默认True）
         """
         self.id = id or self._generate_id()
         self.name = name
         self.color = color  # 如果为None，在服务层分配
         self.createdAt = createdAt or self._get_current_timestamp()
+        self.visible = visible if visible is not None else True
         
         # 验证数据
         self.validate()
@@ -84,6 +86,10 @@ class Owner:
         # 验证颜色格式（如果提供）
         if self.color and not re.match(r'^#[0-9A-Fa-f]{6}$', self.color):
             raise ValueError("颜色格式必须是HEX格式（如#FF6B6B）")
+
+        # 验证visible (必须是布尔值)
+        if not isinstance(self.visible, bool):
+             raise ValueError("visible必须是布尔值")
     
     def to_dict(self):
         """
@@ -96,7 +102,8 @@ class Owner:
             'id': self.id,
             'name': self.name,
             'color': self.color,
-            'createdAt': self.createdAt
+            'createdAt': self.createdAt,
+            'visible': self.visible
         }
     
     @classmethod
@@ -114,7 +121,8 @@ class Owner:
             name=data['name'],
             id=data.get('id'),
             color=data.get('color'),
-            createdAt=data.get('createdAt')
+            createdAt=data.get('createdAt'),
+            visible=data.get('visible', True)
         )
     
     @staticmethod

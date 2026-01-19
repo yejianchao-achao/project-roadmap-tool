@@ -12,4 +12,5 @@
 - [x] 文档与 README 指引完善。
 
 ## 待执行项（需主机信息）
-- 运行实际部署：待提供 `SSH_HOST`、`SSH_USER`、`REMOTE_DIR`、`REMOTE_DATA_DIR` 信息。
+- [x] 运行实际部署：待提供 `SSH_HOST`、`SSH_USER`、`REMOTE_DIR`、`REMOTE_DATA_DIR` 信息（已配置并执行）。
+- [x] 2026-01-19 完成生产环境部署。

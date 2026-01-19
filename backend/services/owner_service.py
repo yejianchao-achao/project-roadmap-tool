@@ -146,6 +146,40 @@ def delete_owner(owner_id):
     _save_owners(owners)
 
 
+def update_owner(owner_id, data):
+    """
+    更新人员信息
+    
+    Args:
+        owner_id: 人员ID
+        data: 更新的数据字典（如 {'visible': False}）
+        
+    Returns:
+        Owner: 更新后的人员对象
+        
+    Raises:
+        ValueError: 人员不存在
+    """
+    owners = get_all_owners()
+    target_owner = None
+    
+    # 查找并更新
+    for owner in owners:
+        if owner.id == owner_id:
+            target_owner = owner
+            # 更新属性
+            if 'visible' in data:
+                owner.visible = bool(data['visible'])
+            # 可以在此添加其他可更新字段
+            break
+            
+    if not target_owner:
+        raise ValueError(f"人员ID {owner_id} 不存在")
+        
+    _save_owners(owners)
+    return target_owner
+
+
 def get_owner_project_count(owner_id):
     """
     获取人员关联的项目数量
@@ -158,12 +192,15 @@ def get_owner_project_count(owner_id):
     """
     try:
         # 导入项目服务（避免循环导入）
-        from services.project_service import get_all_projects
+        from services.project_service import ProjectService
         
-        projects = get_all_projects()
-        count = sum(1 for p in projects if hasattr(p, 'ownerId') and p.ownerId == owner_id)
+        service = ProjectService()
+        projects = service.get_all()
+        count = sum(1 for p in projects if p.get('ownerId') == owner_id)
         return count
-    except Exception:
+    except Exception as e:
+        # 打印错误信息以便调试
+        print(f"获取项目数量失败: {str(e)}")
         # 如果获取失败，返回0（保守策略）
         return 0
 

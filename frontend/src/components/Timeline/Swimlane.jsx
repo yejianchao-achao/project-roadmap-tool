@@ -7,9 +7,18 @@ import { PROJECT_BAR_HEIGHT, PROJECT_BAR_MARGIN } from '../../utils/constants'
  * 检查项目是否在时间范围内可见
  * @param {object} project - 项目对象
  * @param {object} timelineParams - 时间轴参数（包含minDate和maxDate）
+ * @param {array} owners - 人员列表（用于检查可见性）
  * @returns {boolean} 是否在时间范围内可见
  */
-function isProjectVisible(project, timelineParams) {
+function isProjectVisible(project, timelineParams, owners) {
+  // 检查人员可见性
+  if (owners && owners.length > 0) {
+    const owner = owners.find(o => o.id === project.ownerId)
+    if (owner && owner.visible === false) {
+      return false // 人员被隐藏，项目不可见
+    }
+  }
+
   if (!timelineParams || !timelineParams.minDate || !timelineParams.maxDate) {
     return true // 没有时间范围限制时显示所有项目
   }
@@ -34,7 +43,7 @@ function isProjectVisible(project, timelineParams) {
  */
 function Swimlane({ productLine, projects, timelineParams, onEditProject, boardType, owners }) {
   // 过滤出当前时间范围内可见的项目
-  const visibleProjects = projects.filter(p => isProjectVisible(p, timelineParams))
+  const visibleProjects = projects.filter(p => isProjectVisible(p, timelineParams, owners))
 
   // 只为可见项目分配行号（避免重叠）
   const projectsWithRows = assignRows(visibleProjects)

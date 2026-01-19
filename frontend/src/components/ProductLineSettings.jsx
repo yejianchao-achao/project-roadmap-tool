@@ -12,10 +12,10 @@ import { STATUS_COLORS, PROJECT_STATUSES, BOARD_TYPES } from '../utils/constants
  * @param {boolean} collapsed - 是否收起状态
  * @param {function} onToggleCollapse - 切换展开/收起回调
  */
-function ProductLineSettings({ 
-  onOpenManagement, 
-  onOpenOwnerManagement, 
-  boardType = BOARD_TYPES.STATUS, 
+function ProductLineSettings({
+  onOpenManagement,
+  onOpenOwnerManagement,
+  boardType = BOARD_TYPES.STATUS,
   owners = [],
   collapsed = false,
   onToggleCollapse
@@ -23,7 +23,7 @@ function ProductLineSettings({
   // 收起状态：只显示竖向图例
   if (collapsed) {
     return (
-      <div style={{ 
+      <div style={{
         background: '#fff',
         borderRadius: '8px',
         padding: '12px',
@@ -41,7 +41,7 @@ function ProductLineSettings({
             type="text"
             icon={<DoubleRightOutlined />}
             onClick={onToggleCollapse}
-            style={{ 
+            style={{
               width: '32px',
               height: '32px',
               padding: 0,
@@ -54,7 +54,7 @@ function ProductLineSettings({
         </Tooltip>
 
         {/* 竖向图例 - 从视图切换tab下方开始 */}
-        <div style={{ 
+        <div style={{
           display: 'flex',
           flexDirection: 'column',
           gap: '12px',
@@ -115,45 +115,47 @@ function ProductLineSettings({
           ) : (
             // 人员图例 - 竖向排列，带文字
             owners.length > 0 ? (
-              owners.map(owner => (
-                <div
-                  key={owner.id}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '4px',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                >
+              owners
+                .filter(owner => owner.visible !== false)
+                .map(owner => (
                   <div
+                    key={owner.id}
                     style={{
-                      width: '36px',
-                      height: '36px',
-                      backgroundColor: owner.color,
-                      borderRadius: '50%',
-                      border: '2px solid #fff',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '4px',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s'
                     }}
-                  />
-                  <span style={{
-                    fontSize: '10px',
-                    color: '#666',
-                    fontWeight: '500',
-                    textAlign: 'center',
-                    whiteSpace: 'nowrap',
-                    maxWidth: '100%',
-                    lineHeight: '1.2',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
-                  }}>
-                    {owner.name}
-                  </span>
-                </div>
-              ))
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                  >
+                    <div
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        backgroundColor: owner.color,
+                        borderRadius: '50%',
+                        border: '2px solid #fff',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <span style={{
+                      fontSize: '10px',
+                      color: '#666',
+                      fontWeight: '500',
+                      textAlign: 'center',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '100%',
+                      lineHeight: '1.2',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}>
+                      {owner.name}
+                    </span>
+                  </div>
+                ))
             ) : (
               <div style={{
                 display: 'flex',
@@ -161,7 +163,7 @@ function ProductLineSettings({
                 alignItems: 'center',
                 gap: '4px'
               }}>
-                <div style={{ 
+                <div style={{
                   width: '36px',
                   height: '36px',
                   backgroundColor: '#f0f0f0',
@@ -206,15 +208,15 @@ function ProductLineSettings({
 
       {/* 管理按钮组 */}
       <Space direction="vertical" style={{ width: '100%', marginBottom: '16px' }}>
-        <Button 
-          type="primary" 
+        <Button
+          type="primary"
           icon={<SettingOutlined />}
           onClick={onOpenManagement}
           style={{ width: '100%' }}
         >
           管理产品线
         </Button>
-        <Button 
+        <Button
           icon={<TeamOutlined />}
           onClick={onOpenOwnerManagement}
           style={{ width: '100%' }}
@@ -224,8 +226,8 @@ function ProductLineSettings({
       </Space>
 
       {/* 图例卡片 - 根据看板类型显示不同图例 */}
-      <Card 
-        size="small" 
+      <Card
+        size="small"
         title={boardType === BOARD_TYPES.STATUS ? '状态图例' : '人员图例'}
         style={{ marginBottom: '16px' }}
       >
@@ -249,19 +251,21 @@ function ProductLineSettings({
           // 人员图例
           <Space direction="vertical" style={{ width: '100%' }}>
             {owners.length > 0 ? (
-              owners.map(owner => (
-                <div key={owner.id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Badge 
-                    color={owner.color} 
-                    style={{ 
-                      width: 12, 
-                      height: 12,
-                      borderRadius: '50%'
-                    }} 
-                  />
-                  <span style={{ fontSize: '12px' }}>{owner.name}</span>
-                </div>
-              ))
+              owners
+                .filter(owner => owner.visible !== false)
+                .map(owner => (
+                  <div key={owner.id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Badge
+                      color={owner.color}
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: '50%'
+                      }}
+                    />
+                    <span style={{ fontSize: '12px' }}>{owner.name}</span>
+                  </div>
+                ))
             ) : (
               <span style={{ color: '#999', fontSize: '12px' }}>暂无人员</span>
             )}

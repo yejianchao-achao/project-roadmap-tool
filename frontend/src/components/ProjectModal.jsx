@@ -80,18 +80,18 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
     try {
       setLoading(true)
       const newProductLine = await createProductLine(newProductLineName.trim())
-      
+
       // 更新本地产品线列表
       const updatedProductLines = [...localProductLines, newProductLine]
       setLocalProductLines(updatedProductLines)
-      
+
       // 自动选中新建的产品线
       form.setFieldsValue({ productLineId: newProductLine.id })
-      
+
       // 重置新建状态
       setIsCreatingProductLine(false)
       setNewProductLineName('')
-      
+
       message.success('产品线创建成功')
     } catch (error) {
       message.error('产品线创建失败: ' + error.message)
@@ -120,18 +120,18 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
     try {
       setLoading(true)
       const newOwner = await createOwner(newOwnerName.trim())
-      
+
       // 更新本地人员列表
       const updatedOwners = [...owners, newOwner]
       setOwners(updatedOwners)
-      
+
       // 自动选中新建的人员
       form.setFieldsValue({ ownerId: newOwner.id })
-      
+
       // 重置新建状态
       setIsCreatingOwner(false)
       setNewOwnerName('')
-      
+
       message.success('人员创建成功')
     } catch (error) {
       message.error('人员创建失败: ' + error.message)
@@ -155,7 +155,7 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
     try {
       // 验证表单
       const values = await form.validateFields()
-      
+
       setLoading(true)
 
       // 构建项目数据
@@ -256,7 +256,7 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
       width={600}
       okText="确定"
       cancelText="取消"
-        destroyOnHidden
+      destroyOnHidden
       footer={[
         isEditMode && (
           <Popconfirm
@@ -296,8 +296,8 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
             { whitespace: true, message: '项目名称不能为空格' }
           ]}
         >
-          <Input 
-            placeholder="请输入项目名称" 
+          <Input
+            placeholder="请输入项目名称"
             maxLength={100}
             showCount
           />
@@ -379,14 +379,17 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
               </>
             )}
           >
-            {owners.map((owner) => (
-              <Option key={owner.id} value={owner.id}>
-                <Space>
-                  <Badge color={owner.color} />
-                  {owner.name}
-                </Space>
-              </Option>
-            ))}
+            {owners
+              .filter(owner => owner.visible !== false || (editingProject && editingProject.ownerId === owner.id))
+              .map((owner) => (
+                <Option key={owner.id} value={owner.id}>
+                  <Space>
+                    <Badge color={owner.color} />
+                    {owner.name}
+                    {owner.visible === false && <span style={{ fontSize: '12px', color: '#999' }}>(已隐藏)</span>}
+                  </Space>
+                </Option>
+              ))}
           </Select>
         </Form.Item>
 

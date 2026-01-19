@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Drawer, Table, Input, Button, Space, Badge, Tooltip, message, Popconfirm } from 'antd'
+import { Drawer, Table, Input, Button, Space, Badge, Tooltip, message, Popconfirm, Switch } from 'antd'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
-import { getOwners, createOwner, deleteOwner } from '../services/api'
+import { getOwners, createOwner, deleteOwner, updateOwner } from '../services/api'
 
 /**
  * 人员管理组件（侧边弹窗形式）
@@ -46,7 +46,7 @@ function OwnerManagement({ visible, onClose, onRefresh }) {
    */
   const handleCreate = async () => {
     const name = newOwnerName.trim()
-    
+
     if (!name) {
       message.warning('请输入人员姓名')
       return
@@ -125,19 +125,48 @@ function OwnerManagement({ visible, onClose, onRefresh }) {
    */
   const columns = [
     {
+      title: '显示',
+      key: 'visible',
+      width: 80,
+      align: 'center',
+      render: (_, record) => (
+        <Switch
+          checked={record.visible !== false}
+          size="small"
+          onChange={async (checked) => {
+            try {
+              setLoading(true)
+              await updateOwner(record.id, { visible: checked })
+              message.success(`已${checked ? '显示' : '隐藏'}人员 "${record.name}"`)
+              // 刷新列表（这一步很重要，因为会触发整个应用的数据刷新）
+              loadOwners()
+              if (onRefresh) {
+                onRefresh()
+              }
+            } catch (error) {
+              message.error('操作失败: ' + error.message)
+            } finally {
+              setLoading(false)
+            }
+          }}
+        />
+      )
+    },
+    {
       title: '颜色',
       key: 'color',
       width: 60,
       align: 'center',
       render: (_, record) => (
-        <Badge 
-          color={record.color} 
-          style={{ 
-            width: 16, 
+        <Badge
+          color={record.color}
+          style={{
+            width: 16,
             height: 16,
             borderRadius: '50%',
-            display: 'inline-block'
-          }} 
+            display: 'inline-block',
+            opacity: record.visible === false ? 0.3 : 1
+          }}
         />
       )
     },
@@ -148,7 +177,7 @@ function OwnerManagement({ visible, onClose, onRefresh }) {
       width: '35%',
       render: (text, record) => (
         <Space>
-          <span>{text}</span>
+          <span style={{ color: record.visible === false ? '#999' : 'inherit' }}>{text}</span>
           {record.id === 'owner-default' && (
             <span style={{ color: '#999', fontSize: '12px' }}>(默认)</span>
           )}
@@ -158,14 +187,15 @@ function OwnerManagement({ visible, onClose, onRefresh }) {
     {
       title: '关联项目数',
       key: 'projectCount',
-      width: '30%',
+      width: '20%',
       align: 'center',
       render: (_, record) => {
         const count = record.projectCount || 0
         return (
-          <span style={{ 
+          <span style={{
             color: count > 0 ? '#1890ff' : '#8c8c8c',
-            fontWeight: count > 0 ? 'bold' : 'normal'
+            fontWeight: count > 0 ? 'bold' : 'normal',
+            opacity: record.visible === false ? 0.5 : 1
           }}>
             {count}
           </span>
@@ -175,7 +205,7 @@ function OwnerManagement({ visible, onClose, onRefresh }) {
     {
       title: '操作',
       key: 'action',
-      width: '25%',
+      width: '15%',
       align: 'center',
       render: (_, record) => (
         <Tooltip title={getDeleteTooltip(record)}>
@@ -209,7 +239,7 @@ function OwnerManagement({ visible, onClose, onRefresh }) {
       width={600}
       onClose={onClose}
       open={visible}
-        destroyOnHidden
+      destroyOnHidden
     >
       {/* 新建人员区域 */}
       <div style={{ marginBottom: 16 }}>
@@ -224,14 +254,14 @@ function OwnerManagement({ visible, onClose, onRefresh }) {
               style={{ width: 300 }}
               autoFocus
             />
-            <Button 
-              type="primary" 
+            <Button
+              type="primary"
               onClick={handleCreate}
               loading={loading}
             >
               确定
             </Button>
-            <Button 
+            <Button
               onClick={() => {
                 setIsCreating(false)
                 setNewOwnerName('')
@@ -270,10 +300,10 @@ function OwnerManagement({ visible, onClose, onRefresh }) {
       />
 
       {/* 说明文字 */}
-      <div style={{ 
-        marginTop: 16, 
-        padding: 12, 
-        background: '#f0f2f5', 
+      <div style={{
+        marginTop: 16,
+        padding: 12,
+        background: '#f0f2f5',
         borderRadius: 4,
         fontSize: 12,
         color: '#8c8c8c'

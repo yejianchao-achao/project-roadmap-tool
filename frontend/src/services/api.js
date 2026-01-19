@@ -259,12 +259,12 @@ export const createOwner = async (name) => {
     },
     body: JSON.stringify({ name })
   })
-  
+
   if (!response.ok) {
     const error = await response.json()
     throw new Error(error.error || '创建人员失败')
   }
-  
+
   return response.json()
 }
 
@@ -277,12 +277,35 @@ export const deleteOwner = async (ownerId) => {
   const response = await fetch(`${API_BASE_URL}/owners/${ownerId}`, {
     method: 'DELETE'
   })
-  
+
   if (!response.ok) {
     const error = await response.json()
     throw new Error(error.error || '删除人员失败')
   }
-  
+
+  return response.json()
+}
+
+/**
+ * 更新人员信息
+ * @param {string} ownerId - 人员ID
+ * @param {Object} data - 更新的数据
+ * @returns {Promise<Object>} 更新后的人员对象
+ */
+export const updateOwner = async (ownerId, data) => {
+  const response = await fetch(`${API_BASE_URL}/owners/${ownerId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || '更新人员失败')
+  }
+
   return response.json()
 }
 
@@ -293,11 +316,11 @@ export const deleteOwner = async (ownerId) => {
  */
 export const getOwnerProjectCount = async (ownerId) => {
   const response = await fetch(`${API_BASE_URL}/owners/${ownerId}/projects/count`)
-  
+
   if (!response.ok) {
     throw new Error('获取项目数失败')
   }
-  
+
   return response.json()
 }
 

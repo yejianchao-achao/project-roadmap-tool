@@ -124,3 +124,31 @@ def get_owner_project_count(owner_id):
         'ownerId': owner_id,
         'projectCount': project_count
     }), 200
+
+
+@owners_bp.route('/api/owners/<owner_id>', methods=['PUT'])
+@handle_errors
+def update_owner(owner_id):
+    """
+    更新人员信息
+    
+    Args:
+        owner_id: 人员ID
+        
+    Request Body:
+        {
+            "visible": boolean
+        }
+    
+    Returns:
+        JSON: 更新后的人员对象
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': '无效的请求数据'}), 400
+        
+    try:
+        updated_owner = owner_service.update_owner(owner_id, data)
+        return jsonify(updated_owner.to_dict()), 200
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 404
