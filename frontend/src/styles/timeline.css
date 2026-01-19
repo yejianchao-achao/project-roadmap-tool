@@ -56,7 +56,6 @@
 
 .timeline-content {
   position: relative;
-  min-height: 100%;
 }
 
 /* 背景网格 - 周刻度 */
@@ -74,7 +73,8 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  background: rgba(24, 144, 255, 0.12); /* 半透明本周背景 */
+  background: rgba(24, 144, 255, 0.12);
+  /* 半透明本周背景 */
 }
 
 .week-line {
@@ -127,14 +127,16 @@
 /* 项目块 */
 .project-bar {
   position: absolute;
-  height: 48px;
+  height: 40px;
   border-radius: 4px;
   padding: 8px 12px;
   cursor: pointer;
   transition: all 0.3s;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border-width: 3px; /* 增加边框宽度，让虚线更明显 */
-  border-style: solid; /* 默认实线，可被内联样式覆盖 */
+  border-width: 3px;
+  /* 增加边框宽度，让虚线更明显 */
+  border-style: solid;
+  /* 默认实线，可被内联样式覆盖 */
   z-index: 1;
   display: flex;
   align-items: center;
@@ -193,7 +195,8 @@
   right: 0;
   bottom: 0;
   pointer-events: none;
-  z-index: 3; /* 高于项目块，确保清晰可见 */
+  z-index: 3;
+  /* 高于项目块，确保清晰可见 */
 }
 
 .today-line {
@@ -201,7 +204,8 @@
   top: 0;
   bottom: 0;
   width: 2px;
-  background-color: #ff4d4f; /* 红色（Ant Design红） */
+  background-color: #ff4d4f;
+  /* 红色（Ant Design红） */
   box-shadow: 0 0 0 1px rgba(255, 77, 79, 0.2);
 }
 

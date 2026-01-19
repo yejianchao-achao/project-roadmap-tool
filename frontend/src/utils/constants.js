@@ -70,7 +70,7 @@ export const PROJECT_BAR_HEIGHT = 40
 /**
  * 项目块之间的间距（像素）
  */
-export const PROJECT_BAR_MARGIN = 16
+export const PROJECT_BAR_MARGIN = 8
 
 /**
  * 泳道标题宽度（像素）

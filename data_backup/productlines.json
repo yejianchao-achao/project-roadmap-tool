@@ -1,3 +1,34 @@
 {
-  "productlines": []
+  "productlines": [
+    {
+      "id": "pl-b2bcdb67-81f4-4736-9136-d1983da73a1f",
+      "name": "小麦助教",
+      "createdAt": 1760934639349,
+      "order": 0
+    },
+    {
+      "id": "pl-05242175-3aca-443e-a609-7427c05b5aa1",
+      "name": "文化版",
+      "createdAt": 1760934644962,
+      "order": 1
+    },
+    {
+      "id": "pl-a8f346f7-ac5a-4389-a995-302023c297b1",
+      "name": "tarot",
+      "createdAt": 1760934659129,
+      "order": 2
+    },
+    {
+      "id": "pl-2d764091-c665-4f34-ad61-76da816261a6",
+      "name": "小麦乐动",
+      "createdAt": 1760934667643,
+      "order": 3
+    },
+    {
+      "id": "pl-73050888-277a-4e4a-b115-ee5d00fbd5ab",
+      "name": "核心平台",
+      "createdAt": 1762746565775,
+      "order": 4
+    }
+  ]
 }
