@@ -5,6 +5,7 @@ import TimelineHeader from './TimelineHeader'
 import TimelineGrid from './TimelineGrid'
 import TimelineOverlay from './TimelineOverlay'
 import Swimlane from './Swimlane'
+import useTimelineInteractions from './useTimelineInteractions'
 import { calculateTimelineParams, calculateCustomTimelineParams } from '../../utils/dateUtils'
 import { groupProjectsByProductLine } from '../../utils/layoutUtils'
 import { BOARD_TYPES } from '../../utils/constants'
@@ -28,6 +29,8 @@ function TimelineView({
   productLines, 
   selectedProductLines, 
   onEditProject,
+  onCreateProject,
+  onMoveProject,
   customTimelineRange,
   visibleMonths,
   owners = [],
@@ -39,6 +42,7 @@ function TimelineView({
   const [groupedProjects, setGroupedProjects] = useState({})
   const scrollContainerRef = useRef(null)
   const headerRef = useRef(null)
+  const interactions = useTimelineInteractions({ timelineParams, scrollContainerRef, onCreateProject, onMoveProject })
 
   /**
    * 计算时间轴参数和分组项目（统一计算 pixelsPerDay）
@@ -159,7 +163,7 @@ function TimelineView({
       // 手动触发一次同步，确保初始滚动位置的头部也同步
       syncHeaderScroll()
     })
-  }, [timelineParams?.pixelsPerDay, timelineParams?.minDate, timelineParams?.totalWidth, syncHeaderScroll])
+  }, [timelineParams?.pixelsPerDay, timelineParams?.minDate?.valueOf(), timelineParams?.totalWidth, syncHeaderScroll])
 
   /**
    * 当时间范围变化时，滚动到起始位置
@@ -188,7 +192,7 @@ function TimelineView({
   }
 
   // 如果没有项目，显示空状态
-  if (!timelineParams || projects.length === 0) {
+  if (!timelineParams) {
     return (
       <div className="timeline-empty">
         <p>暂无项目数据</p>
@@ -200,9 +204,13 @@ function TimelineView({
   const visibleProductLines = getVisibleProductLines()
 
   return (
-    <div className="timeline-container">
+    <div className="timeline-container"
+      onPointerDownCapture={interactions.onPointerDownCapture}
+      onClickCapture={interactions.onClickCapture}
+      onClick={interactions.onBlankClick}
+    >
       {/* 看板切换控件 */}
-      <div style={{ 
+      <div className="timeline-toolbar" style={{
         marginBottom: 16, 
         display: 'flex', 
         justifyContent: 'flex-end',
@@ -254,15 +262,32 @@ function TimelineView({
                 onEditProject={onEditProject}
                 boardType={boardType}
                 owners={owners}
+                registerLayout={interactions.registerLayout}
+                onPointerDown={interactions.startDrag}
+                preview={interactions.preview}
+                saving={interactions.saving}
               />
             ))
           ) : (
             <div className="timeline-empty">
-              <p>请选择要显示的产品线</p>
+              <p>{productLines.length ? '请选择要显示的产品线，或点击空白新建项目' : '点击空白新建项目'}</p>
             </div>
           )}
         </div>
       </div>
+      {interactions.preview && (
+        <div className={`timeline-drag-hint${interactions.preview.valid ? '' : ' timeline-drag-hint--invalid'}`}
+          role="status"
+          style={{ left: Math.max(8, Math.min(interactions.preview.x + 16, window.innerWidth - 310)), top: Math.max(8, Math.min(interactions.preview.y + 18, window.innerHeight - 80)) }}
+        >
+          {interactions.saving ? '正在保存…' : interactions.preview.valid ? (
+            <>
+              <div>{interactions.preview.productLineName} · 第 {interactions.preview.row + 1} 行{interactions.preview.row !== interactions.preview.requestedRow ? '（自动避让）' : ''}</div>
+              <div>{interactions.preview.candidate.startDate} → {interactions.preview.candidate.endDate}</div>
+            </>
+          ) : '移入产品线后松手 · Esc 取消'}
+        </div>
+      )}
     </div>
   )
 }

@@ -15,7 +15,7 @@ const { TextArea } = Input
  * @param {object} editingProject - 正在编辑的项目（null表示创建模式）
  * @param {array} productLines - 产品线列表
  */
-function ProjectModal({ visible, onClose, onSuccess, editingProject, productLines }) {
+function ProjectModal({ visible, onClose, onSuccess, editingProject, productLines, createDefaults = {} }) {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [isCreatingProductLine, setIsCreatingProductLine] = useState(false)
@@ -65,8 +65,14 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
     } else if (visible) {
       // 创建模式时重置表单
       form.resetFields()
+      form.setFieldsValue({
+        productLineId: createDefaults.productLineId,
+        startDate: createDefaults.startDate ? dayjs(createDefaults.startDate) : undefined,
+        endDate: createDefaults.endDate ? dayjs(createDefaults.endDate) : undefined,
+        status: PROJECT_STATUSES[0]
+      })
     }
-  }, [visible, editingProject, form])
+  }, [visible, editingProject, form, createDefaults])
 
   /**
    * 处理新建产品线
@@ -168,6 +174,9 @@ function ProjectModal({ visible, onClose, onSuccess, editingProject, productLine
         status: values.status,
         isPending: values.isPending || false,
         remarks: values.remarks ? values.remarks.trim() : ''
+      }
+      if (!isEditMode && values.productLineId === createDefaults.productLineId && Number.isInteger(createDefaults.layoutRow)) {
+        projectData.layoutRow = createDefaults.layoutRow
       }
 
       // 调用API

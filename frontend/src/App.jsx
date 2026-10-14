@@ -8,7 +8,7 @@ import ProductLineSettings from './components/ProductLineSettings'
 import ProductLineManagement from './components/ProductLineManagement'
 import TimelineSettings from './components/TimelineSettings'
 import OwnerManagement from './components/OwnerManagement'
-import { getProjects, getProductLines, getSettings, updateVisibleProductLines, getOwners } from './services/api'
+import { getProjects, getProductLines, getSettings, updateVisibleProductLines, getOwners, moveProject } from './services/api'
 import { loadTimelineSettings, saveTimelineSettings } from './utils/storageUtils'
 import { DEFAULT_VISIBLE_MONTHS, BOARD_TYPES } from './utils/constants'
 import './styles/calendar.css'
@@ -21,6 +21,7 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [modalVisible, setModalVisible] = useState(false)
   const [editingProject, setEditingProject] = useState(null)
+  const [createDefaults, setCreateDefaults] = useState({})
   const [selectedProductLines, setSelectedProductLines] = useState([])
   const [managementVisible, setManagementVisible] = useState(false)
   const [ownerManagementVisible, setOwnerManagementVisible] = useState(false)
@@ -134,9 +135,21 @@ function App() {
   /**
    * 打开新建项目弹窗
    */
-  const handleCreateProject = () => {
+  const handleCreateProject = (defaults = {}) => {
     setEditingProject(null)
+    setCreateDefaults(defaults)
     setModalVisible(true)
+  }
+
+  const handleMoveProject = async (projectId, placement) => {
+    try {
+      const result = await moveProject(projectId, placement)
+      setProjects(result.projects)
+      const name = productLines.find(line => line.id === result.project.productLineId)?.name || '目标产品线'
+      message.success(`已移至${name}第 ${result.project.layoutRow + 1} 行`)
+    } catch (error) {
+      message.error(error.status === 409 ? error.message : `移动未保存，已恢复原位：${error.message}`)
+    }
   }
 
   /**
@@ -292,7 +305,7 @@ function App() {
         <Button 
           type="primary" 
           icon={<PlusOutlined />}
-          onClick={handleCreateProject}
+          onClick={() => handleCreateProject()}
         >
           新建项目
         </Button>
@@ -355,7 +368,9 @@ function App() {
               })
             }}
           >
-            <div style={{ 
+            <div className="roadmap-board" onClick={event => {
+              if (viewType !== 'calendar' && event.target === event.currentTarget) handleCreateProject()
+            }} style={{
               background: '#fff', 
               padding: '24px', 
               borderRadius: '8px',
@@ -379,6 +394,8 @@ function App() {
                   productLines={productLines}
                   selectedProductLines={selectedProductLines}
                   onEditProject={handleEditProject}
+                  onCreateProject={handleCreateProject}
+                  onMoveProject={handleMoveProject}
                   customTimelineRange={timelineRange}
                   visibleMonths={visibleMonths}
                   owners={owners}
@@ -398,6 +415,7 @@ function App() {
         onClose={handleCloseModal}
         onSuccess={handleModalSuccess}
         editingProject={editingProject}
+        createDefaults={createDefaults}
         productLines={productLines}
       />
 

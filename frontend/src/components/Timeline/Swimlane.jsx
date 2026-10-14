@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import ProjectBar from './ProjectBar'
-import { assignRows, calculateSwimlaneHeight, getProjectDateLabel } from '../../utils/layoutUtils'
+import { assignRows, calculateProjectBarPosition, getProjectDateLabel } from '../../utils/layoutUtils'
 import { PROJECT_BAR_HEIGHT, PROJECT_BAR_MARGIN } from '../../utils/constants'
 
 /**
@@ -42,7 +42,8 @@ function isProjectVisible(project, timelineParams, owners) {
  * @param {string} boardType - 看板类型
  * @param {array} owners - 人员列表
  */
-function Swimlane({ productLine, projects, timelineParams, onEditProject, boardType, owners }) {
+function Swimlane({ productLine, projects, timelineParams, onEditProject, boardType, owners,
+  registerLayout, onPointerDown, preview, saving }) {
   const measurementRef = useRef(null)
   const [measurements, setMeasurements] = useState({})
   // 过滤出当前时间范围内可见的项目
@@ -77,22 +78,42 @@ function Swimlane({ productLine, projects, timelineParams, onEditProject, boardT
       active = false
       window.removeEventListener('resize', measure)
     }
-  }, [visibleProjects])
+  }, [projects])
 
-  // 只为可见项目分配行号（避免重叠）
+  // 隐藏项目也参与行占用，拖入后不会与它们发生工期冲突。
   const projectsWithRows = useMemo(
-    () => assignRows(visibleProjects, timelineParams, measurements),
-    [visibleProjects, timelineParams, measurements]
+    () => assignRows(projects, timelineParams, measurements),
+    [projects, timelineParams, measurements]
   )
+  useLayoutEffect(() => {
+    registerLayout?.(productLine.id, projectsWithRows)
+  }, [registerLayout, productLine.id, projectsWithRows])
 
-  // 只根据可见项目计算泳道高度
-  const height = calculateSwimlaneHeight(projectsWithRows, PROJECT_BAR_HEIGHT, PROJECT_BAR_MARGIN)
+  const rowCount = Math.max(0, ...projectsWithRows.map(project => project.row)) + 2
+  const rowSlots = []
+  let height = 0
+  for (let row = 0; row < rowCount; row++) {
+    const barTop = projectsWithRows.find(project => project.row === row)?.layout.top ?? (height || PROJECT_BAR_MARGIN)
+    const bottom = barTop + PROJECT_BAR_HEIGHT + PROJECT_BAR_MARGIN
+    rowSlots.push({ row, top: height, height: bottom - height, barTop })
+    height = bottom
+  }
+  const isTarget = preview?.valid && preview.productLineId === productLine.id
+  const ghost = isTarget ? calculateProjectBarPosition(preview.candidate, timelineParams) : null
+  const targetSlot = isTarget ? rowSlots.find(slot => slot.row === preview.row) : null
 
   return (
-    <div className="swimlane" style={{ height: `${height}px` }}>
+    <div className={`swimlane${isTarget ? ' swimlane--drop-target' : ''}`}
+      data-product-line-id={productLine.id} data-product-line-name={productLine.name}
+      style={{ height: `${height}px` }}>
+      {rowSlots.map(slot => (
+        <div key={slot.row} data-layout-row={slot.row} data-bar-top={slot.barTop}
+          className={`timeline-row-slot${isTarget && preview.row === slot.row ? ' timeline-row-slot--target' : ''}`}
+          style={{ top: slot.top, height: slot.height }} aria-hidden="true" />
+      ))}
       <div className="project-text-measurements" ref={measurementRef} aria-hidden="true">
         <span className="project-bar" />
-        {visibleProjects.map(project => (
+        {projects.map(project => (
           <div key={project.id} data-project-id={project.id}>
             <span className="project-name">{project.name}</span>
             <span className="project-dates">{getProjectDateLabel(project)}</span>
@@ -107,7 +128,7 @@ function Swimlane({ productLine, projects, timelineParams, onEditProject, boardT
 
       {/* 项目块容器 */}
       <div className="swimlane-content">
-        {projectsWithRows.map(project => (
+        {projectsWithRows.filter(project => isProjectVisible(project, timelineParams, owners)).map(project => (
           <ProjectBar
             key={project.id}
             project={project}
@@ -116,8 +137,18 @@ function Swimlane({ productLine, projects, timelineParams, onEditProject, boardT
             onEdit={onEditProject}
             boardType={boardType}
             owners={owners}
+            onPointerDown={onPointerDown}
+            isDragging={preview?.project.id === project.id}
           />
         ))}
+        {ghost && targetSlot && (
+          <div className={`project-drop-preview${saving ? ' project-drop-preview--saving' : ''}`}
+            data-drop-row={preview.row}
+            style={{ left: ghost.left, width: Math.max(ghost.width, 2), top: targetSlot.barTop, height: PROJECT_BAR_HEIGHT }}
+            aria-hidden="true">
+            <span>{preview.project.name}</span>
+          </div>
+        )}
       </div>
     </div>
   )

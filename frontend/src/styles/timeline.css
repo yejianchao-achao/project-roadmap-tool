@@ -8,6 +8,7 @@
   border-radius: 8px;
   overflow: hidden;
   position: relative;
+  min-height: 520px;
 }
 
 /* 时间轴头部 - 月份刻度 */
@@ -83,6 +84,7 @@
   flex: 1;
   overflow: auto;
   position: relative;
+  min-height: 360px;
 }
 
 .timeline-content {
@@ -167,6 +169,8 @@
   cursor: pointer;
   overflow: visible;
   z-index: 1;
+  touch-action: none;
+  user-select: none;
 }
 
 .project-bar {
@@ -191,6 +195,65 @@
 .project-item:hover,
 .project-item:focus-visible {
   z-index: 2;
+}
+
+.timeline-dragging,
+.timeline-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+
+.project-item--dragging {
+  opacity: 0.3;
+}
+
+.timeline-row-slot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+.timeline-row-slot--target {
+  background: rgba(22, 119, 255, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(22, 119, 255, 0.25);
+}
+
+.project-drop-preview {
+  position: absolute;
+  z-index: 8;
+  border: 2px dashed #1677ff;
+  border-radius: 4px;
+  background: rgba(22, 119, 255, 0.24);
+  color: #0958d9;
+  padding: 8px 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.project-drop-preview--saving {
+  opacity: 0.6;
+}
+
+.timeline-drag-hint {
+  position: fixed;
+  z-index: 1200;
+  max-width: 302px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #0958d9;
+  color: #fff;
+  font-size: 12px;
+  line-height: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
+  pointer-events: none;
+}
+
+.timeline-drag-hint--invalid {
+  background: #595959;
 }
 
 .project-item:hover .project-bar,

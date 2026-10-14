@@ -10,7 +10,7 @@ import { calculateProjectBarLayout } from '../../utils/layoutUtils'
  * @param {string} boardType - 看板类型
  * @param {array} owners - 人员列表
  */
-function ProjectBar({ project, timelineParams, row, onEdit, boardType = BOARD_TYPES.STATUS, owners = [] }) {
+function ProjectBar({ project, timelineParams, row, onEdit, onPointerDown, isDragging = false, boardType = BOARD_TYPES.STATUS, owners = [] }) {
   const layout = project.layout || calculateProjectBarLayout(project, timelineParams)
   const { left, width, mode, dateLabel } = layout
   
@@ -49,7 +49,10 @@ function ProjectBar({ project, timelineParams, row, onEdit, boardType = BOARD_TY
   return (
     <button
       type="button"
-      className={`project-item project-item--${mode}`}
+      className={`project-item project-item--${mode}${isDragging ? ' project-item--dragging' : ''}`}
+      data-project-id={project.id}
+      data-layout-row={row}
+      onPointerDown={event => onPointerDown?.(project, event)}
       aria-label={`编辑项目：${project.name}，${project.startDate} 至 ${project.endDate}，状态：${project.status}${isPending ? '，暂定' : ''}`}
       style={{
         left: `${left}px`,

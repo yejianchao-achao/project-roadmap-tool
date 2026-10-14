@@ -4,6 +4,7 @@
 """
 import json
 import os
+import tempfile
 from threading import Lock
 
 # 文件锁字典，为每个文件维护一个锁
@@ -89,3 +90,24 @@ def get_data_file_path(filename):
     data_dir = os.path.join(project_root, 'data')
     
     return os.path.join(data_dir, filename)
+
+
+def mutate_json_file(filepath, mutation):
+    """Lock the complete read/modify/write operation; replace only after validation succeeds."""
+    with _get_file_lock(filepath):
+        with open(filepath, encoding='utf-8') as handle:
+            data = json.load(handle)
+        result = mutation(data)
+        mode = os.stat(filepath).st_mode & 0o777
+        fd, temporary = tempfile.mkstemp(prefix='.projects-', dir=os.path.dirname(filepath))
+        try:
+            with os.fdopen(fd, 'w', encoding='utf-8') as handle:
+                json.dump(data, handle, ensure_ascii=False, indent=2)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.chmod(temporary, mode)
+            os.replace(temporary, filepath)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+        return result

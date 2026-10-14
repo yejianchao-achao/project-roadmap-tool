@@ -4,6 +4,7 @@
 """
 from flask import Blueprint, request, jsonify
 from services.project_service import ProjectService
+from services.placement_service import PlacementConflict
 from utils.decorators import handle_errors
 
 # 创建蓝图
@@ -97,7 +98,8 @@ def create_project():
         endDate=data['endDate'],
         status=data['status'],
         isPending=data.get('isPending', False),
-        remarks=data.get('remarks', '')
+        remarks=data.get('remarks', ''),
+        layoutRow=data.get('layoutRow')
     )
     
     return jsonify({
@@ -140,7 +142,7 @@ def update_project(project_id):
     
     # 只更新提供的字段
     update_fields = {}
-    allowed_fields = ['name', 'productLineId', 'ownerId', 'startDate', 'endDate', 'status', 'isPending', 'remarks']
+    allowed_fields = ['name', 'productLineId', 'ownerId', 'startDate', 'endDate', 'status', 'isPending', 'remarks', 'layoutRow']
     
     for field in allowed_fields:
         if field in data:
@@ -164,6 +166,20 @@ def update_project(project_id):
         'success': True,
         'data': project
     })
+
+
+@projects_bp.route('/api/projects/<project_id>/move', methods=['PUT'])
+@handle_errors
+def move_project(project_id):
+    data = request.get_json()
+    required = {'startDate', 'endDate', 'productLineId', 'preferredRow', 'expectedUpdatedAt', 'rowAssignments'}
+    if not isinstance(data, dict) or not required <= data.keys():
+        return jsonify(success=False, error='缺少移动参数'), 400
+    try:
+        result = service.move(project_id, data)
+    except PlacementConflict as error:
+        return jsonify(success=False, error=str(error)), 409
+    return jsonify(success=True, data=result)
 
 
 @projects_bp.route('/api/projects/<project_id>', methods=['DELETE'])

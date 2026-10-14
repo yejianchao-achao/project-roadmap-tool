@@ -29,7 +29,8 @@ class Project:
     VALID_STATUSES = ['规划', '方案', '设计', '开发', '测试', '已上', '暂停']
     
     def __init__(self, name, productLineId, startDate, endDate, status,
-                 ownerId=None, isPending=False, remarks='', id=None, createdAt=None, updatedAt=None):
+                 ownerId=None, isPending=False, remarks='', id=None, createdAt=None, updatedAt=None,
+                 layoutRow=None):
         """
         初始化项目对象
         
@@ -55,6 +56,7 @@ class Project:
         self.endDate = endDate
         self.status = status
         self.remarks = remarks  # 新增：项目备注
+        self.layoutRow = layoutRow
         self.createdAt = createdAt or self._get_current_timestamp()
         self.updatedAt = updatedAt or self._get_current_timestamp()
         
@@ -88,6 +90,9 @@ class Project:
         Raises:
             ValueError: 数据验证失败
         """
+        if self.layoutRow is not None and (type(self.layoutRow) is not int or not 0 <= self.layoutRow <= 10000):
+            raise ValueError('布局行号必须为 0 至 10000 的整数或空值')
+
         # 验证项目名称
         if not self.name or not isinstance(self.name, str):
             raise ValueError("项目名称必须是非空字符串")
@@ -146,6 +151,7 @@ class Project:
             'endDate': self.endDate,
             'status': self.status,
             'remarks': self.remarks,  # 新增：项目备注
+            'layoutRow': self.layoutRow,
             'createdAt': self.createdAt,
             'updatedAt': self.updatedAt
         }
@@ -172,7 +178,8 @@ class Project:
             remarks=data.get('remarks', ''),  # 新增：项目备注，默认空字符串以兼容旧数据
             id=data.get('id'),
             createdAt=data.get('createdAt'),
-            updatedAt=data.get('updatedAt')
+            updatedAt=data.get('updatedAt'),
+            layoutRow=data.get('layoutRow')
         )
     
     def update(self, **kwargs):
@@ -182,14 +189,14 @@ class Project:
         Args:
             **kwargs: 要更新的属性键值对
         """
-        allowed_fields = ['name', 'productLineId', 'ownerId', 'startDate', 'endDate', 'status', 'isPending', 'remarks']  # 新增remarks
+        allowed_fields = ['name', 'productLineId', 'ownerId', 'startDate', 'endDate', 'status', 'isPending', 'remarks', 'layoutRow']
         
         for key, value in kwargs.items():
             if key in allowed_fields:
                 setattr(self, key, value)
         
         # 更新时间戳
-        self.updatedAt = self._get_current_timestamp()
+        self.updatedAt = max(self._get_current_timestamp(), self.updatedAt + 1)
         
         # 重新验证
         self.validate()

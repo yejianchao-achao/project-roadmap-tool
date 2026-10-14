@@ -3,6 +3,7 @@
  * 处理项目块的位置计算和重叠检测
  */
 import dayjs from 'dayjs'
+import { nearestFreeRow } from './placementUtils.js'
 import { PROJECT_BAR_HEIGHT, PROJECT_BAR_MARGIN, PROJECT_LABEL_HEIGHT, PROJECT_LABEL_GAP, PROJECT_LABEL_SPACING, PROJECT_BAR_NAME_PADDING } from './constants.js'
 
 /**
@@ -55,6 +56,7 @@ export function calculateProjectBarLayout(project, timelineParams, measurement =
     ? 'full'
     : (nameWidth + 2 <= compactWidth ? 'name' : 'external')
   const layout = { left, width, mode, dateLabel, occupiedStart: left, occupiedEnd: left + width }
+  if (width === 0) return { ...layout, mode: 'hidden' }
 
   if (mode === 'external') {
     const labelGap = 6
@@ -79,7 +81,7 @@ function rangesOverlap(firstStart, firstEnd, secondStart, secondEnd, gap = 0) {
 }
 
 /** 先排工期，再为名称安排位置，同一行的所有色条共享垂直位置。 */
-function positionRowLabels(rowProjects, timelineParams) {
+function positionRowLabels(rowProjects, timelineParams, preserveRow = false) {
   const sideLabels = []
   const aboveLabels = []
 
@@ -87,7 +89,7 @@ function positionRowLabels(rowProjects, timelineParams) {
     const layout = project.layout
     if (layout.mode !== 'external') continue
 
-    const overlapsBar = rowProjects.some(other => other.id !== project.id && rangesOverlap(
+    const overlapsBar = rowProjects.some(other => other.id !== project.id && other.layout.width > 0 && rangesOverlap(
       layout.occupiedStart, layout.occupiedEnd, other.layout.left, other.layout.left + other.layout.width
     ))
     const overlapsSideLabel = sideLabels.some(other => rangesOverlap(
@@ -113,18 +115,26 @@ function positionRowLabels(rowProjects, timelineParams) {
   const totalWidth = timelineParams.totalWidth ?? Infinity
   const requiredWidth = aboveLabels.reduce((sum, layout) => sum + layout.labelWidth, 0) +
     Math.max(0, aboveLabels.length - 1) * PROJECT_LABEL_SPACING
-  if (requiredWidth > totalWidth) return null
+  let labelSpacing = PROJECT_LABEL_SPACING
+  if (requiredWidth > totalWidth) {
+    if (!preserveRow) return null
+    // 手动行优先保留；极密缩放时收紧名称槽，完整名称仍可悬停查看。
+    labelSpacing = Math.min(PROJECT_LABEL_SPACING, totalWidth / (aboveLabels.length * 2))
+    const available = Math.max(0, totalWidth - Math.max(0, aboveLabels.length - 1) * labelSpacing)
+    const maxLabelWidth = available / aboveLabels.length
+    aboveLabels.forEach(layout => { layout.labelWidth = Math.min(layout.labelWidth, maxLabelWidth) })
+  }
 
-  let previousEnd = -PROJECT_LABEL_SPACING
+  let previousEnd = -labelSpacing
   for (const layout of aboveLabels) {
-    layout.labelLeft = Math.max(layout.labelLeft, previousEnd + PROJECT_LABEL_SPACING)
+    layout.labelLeft = Math.max(layout.labelLeft, previousEnd + labelSpacing)
     previousEnd = layout.labelLeft + layout.labelWidth
   }
   let rightBoundary = totalWidth
   for (let index = aboveLabels.length - 1; index >= 0; index--) {
     const layout = aboveLabels[index]
     layout.labelLeft = Math.min(layout.labelLeft, rightBoundary - layout.labelWidth)
-    rightBoundary = layout.labelLeft - PROJECT_LABEL_SPACING
+    rightBoundary = layout.labelLeft - labelSpacing
   }
 
   return aboveLabels.length ? PROJECT_LABEL_HEIGHT + PROJECT_LABEL_GAP : 0
@@ -134,7 +144,7 @@ function createRowLayouts(projects, timelineParams, measurements) {
   const rowProjects = projects.map(project => ({
     ...project, layout: calculateProjectBarLayout(project, timelineParams, measurements[project.id])
   }))
-  const labelSpace = positionRowLabels(rowProjects, timelineParams)
+  const labelSpace = positionRowLabels(rowProjects, timelineParams, projects.some(project => Number.isInteger(project.layoutRow)))
   return labelSpace === null ? null : { rowProjects, labelSpace }
 }
 
@@ -165,15 +175,16 @@ export function assignRows(projects, timelineParams, measurements = {}) {
     return []
   }
   
-  // 按开始时间排序
+  // 手动行优先占位，自动项目保持按开始时间排布。
   const sorted = [...projects].sort((a, b) => 
+    Number(!Number.isInteger(a.layoutRow)) - Number(!Number.isInteger(b.layoutRow)) ||
     dayjs(a.startDate).diff(dayjs(b.startDate))
   )
   
   const result = []
   
   for (const project of sorted) {
-    let row = 0
+    let row = Number.isInteger(project.layoutRow) ? nearestFreeRow(project, result, project.layoutRow) : 0
     
     // 找到第一个不冲突的行
     while (true) {

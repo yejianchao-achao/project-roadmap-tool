@@ -196,6 +196,22 @@ export async function updateProject(projectId, updates) {
   return data.data
 }
 
+/** 一次保存排期、产品线和布局，返回服务器确认的项目快照。 */
+export async function moveProject(projectId, placement) {
+  const response = await fetch(`${API_BASE_URL}/projects/${projectId}/move`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(placement)
+  })
+  const body = await response.json()
+  if (!response.ok || !body.success) {
+    const error = new Error(body.error || '移动保存失败')
+    error.status = response.status
+    throw error
+  }
+  return body.data
+}
+
 /**
  * 删除项目
  * @param {string} projectId - 项目ID
