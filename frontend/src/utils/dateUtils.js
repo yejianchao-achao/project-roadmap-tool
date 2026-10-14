@@ -3,12 +3,12 @@
  * 处理时间轴相关的日期计算
  */
 import dayjs from 'dayjs'
-import minMax from 'dayjs/plugin/minMax'
+import minMax from 'dayjs/plugin/minMax.js'
 import { 
   PIXELS_PER_DAY, 
   TIMELINE_TOTAL_MONTHS_BEFORE, 
   TIMELINE_TOTAL_MONTHS_AFTER 
-} from './constants'
+} from './constants.js'
 
 // 扩展dayjs以支持min/max方法
 dayjs.extend(minMax)
@@ -67,26 +67,33 @@ export function generateMonthTicks(timelineParams) {
   return ticks
 }
 
-/**
- * 生成周刻度网格线位置
- * @param {Object} timelineParams - 时间轴参数
- * @returns {Array} 周刻度位置数组（像素值）
- */
-export function generateWeekGridLines(timelineParams) {
+// 显式按周一计算，避免全局语言设置改变时间轴的周起点。
+function startOfMondayWeek(date) {
+  return date.startOf('day').subtract((date.day() + 6) % 7, 'day')
+}
+
+/** 生成周一日期及坐标，供表头与背景网格共用。 */
+export function generateWeekTicks(timelineParams) {
   const { minDate, maxDate, pixelsPerDay } = timelineParams
-  const lines = []
-  
-  let current = minDate.startOf('week')
-  
-  while (current.isBefore(maxDate)) {
-    const offset = current.diff(minDate, 'day') * pixelsPerDay
-    if (offset >= 0) {
-      lines.push(offset)
-    }
+  const ticks = []
+  let current = startOfMondayWeek(minDate)
+  if (current.isBefore(minDate)) current = current.add(1, 'week')
+
+  while (!current.isAfter(maxDate, 'day')) {
+    ticks.push({
+      date: current.format('YYYY-MM-DD'),
+      label: current.format('M/D'),
+      offset: current.diff(minDate, 'day') * pixelsPerDay
+    })
     current = current.add(1, 'week')
   }
-  
-  return lines
+
+  return ticks
+}
+
+/** 生成与周一日期对齐的背景网格线。 */
+export function generateWeekGridLines(timelineParams) {
+  return generateWeekTicks(timelineParams).map(tick => tick.offset)
 }
 
 /**
@@ -107,23 +114,24 @@ export function generateTodayOffset(timelineParams) {
 
 /**
  * 计算“本周阴影”在时间轴上的渲染范围
- * 起点为本周开始（周日），宽度为7天；并进行边界裁剪以适配时间范围
+ * 起点为本周一，覆盖至下周一；按时间轴边界裁剪。
  * @param {Object} timelineParams - 时间轴参数 { minDate, maxDate, pixelsPerDay, totalWidth }
  * @returns {{left:number, width:number}|null} 本周阴影的left与width，或null（不在范围）
  */
-export function generateCurrentWeekHighlightRange(timelineParams) {
+export function generateCurrentWeekHighlightRange(timelineParams, today = dayjs()) {
   const { minDate, maxDate, pixelsPerDay, totalWidth } = timelineParams
-  const weekStart = dayjs().startOf('week')
+  const weekStart = startOfMondayWeek(today)
   const weekEnd = weekStart.add(7, 'day')
+  const rangeEnd = maxDate.startOf('day').add(1, 'day')
 
   // 如果整周在可视范围外，返回null
-  if (weekEnd.isBefore(minDate) || weekStart.isAfter(maxDate)) {
+  if (!weekEnd.isAfter(minDate) || !weekStart.isBefore(rangeEnd)) {
     return null
   }
 
   // 计算起点与终点相对minDate的像素位置
   const startDays = Math.max(0, weekStart.diff(minDate, 'day'))
-  const endDays = Math.min(maxDate.diff(minDate, 'day'), weekEnd.diff(minDate, 'day'))
+  const endDays = Math.min(rangeEnd.diff(minDate, 'day'), weekEnd.diff(minDate, 'day'))
 
   const left = startDays * pixelsPerDay
   const width = Math.max(0, (endDays - startDays) * pixelsPerDay)

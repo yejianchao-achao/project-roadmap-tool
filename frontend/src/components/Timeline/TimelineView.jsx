@@ -224,6 +224,7 @@ function TimelineView({
         timelineParams={timelineParams} 
         headerRef={headerRef}
         viewportWidth={getViewportWidth()}
+        showWeekDates={monthWidth >= 240}
       />
 
       {/* 时间轴内容区域 - 可滚动，宽度由视口月份数决定 */}
