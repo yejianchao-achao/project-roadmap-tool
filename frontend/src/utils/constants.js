@@ -72,6 +72,12 @@ export const PROJECT_BAR_HEIGHT = 40
  */
 export const PROJECT_BAR_MARGIN = 8
 
+/** 外置名称上移时预留的行高与间距。 */
+export const PROJECT_LABEL_HEIGHT = 20
+export const PROJECT_LABEL_GAP = 12
+export const PROJECT_LABEL_SPACING = 6
+export const PROJECT_BAR_NAME_PADDING = 4
+
 /**
  * 泳道标题宽度（像素）
  */

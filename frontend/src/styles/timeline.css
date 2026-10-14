@@ -125,13 +125,27 @@
 }
 
 /* 项目块 */
-.project-bar {
+.project-item {
   position: absolute;
   height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: visible;
+  z-index: 1;
+}
+
+.project-bar {
+  position: absolute;
+  inset: 0;
+  height: 100%;
   border-radius: 4px;
   padding: 8px 12px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: box-shadow 0.2s;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border-width: 3px;
   /* 增加边框宽度，让虚线更明显 */
@@ -143,10 +157,58 @@
   overflow: hidden;
 }
 
-.project-bar:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+.project-item:hover,
+.project-item:focus-visible {
   z-index: 2;
+}
+
+.project-item:hover .project-bar,
+.project-item:focus-visible .project-bar {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.project-item:focus-visible {
+  outline: 2px solid #1677ff;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.project-name-external {
+  position: absolute;
+  top: 0;
+  display: block;
+  height: 100%;
+  line-height: 40px;
+}
+
+.project-name-above {
+  text-align: center;
+}
+
+.project-label-connector {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.project-item:hover .project-name-external,
+.project-item:focus-visible .project-name-external {
+  color: #1677ff;
+}
+
+.project-text-measurements {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.project-text-measurements .project-name,
+.project-text-measurements .project-dates {
+  display: block;
+  width: max-content;
 }
 
 .project-bar-paused {

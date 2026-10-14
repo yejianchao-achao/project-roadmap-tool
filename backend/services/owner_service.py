@@ -4,11 +4,11 @@
 """
 import os
 from models.owner import Owner
-from utils.file_handler import read_json_file, write_json_file
+from utils.file_handler import read_json_file, write_json_file, get_data_file_path
 
 
 # 数据文件路径
-OWNERS_FILE = 'data/owners.json'
+OWNERS_FILE = get_data_file_path('owners.json')
 
 
 def get_all_owners():
@@ -234,7 +234,7 @@ def _save_owners(owners):
         owners: 人员对象列表
     """
     # 确保data目录存在
-    os.makedirs('data', exist_ok=True)
+    os.makedirs(os.path.dirname(OWNERS_FILE), exist_ok=True)
     
     # 转换为字典格式
     data = {
@@ -251,5 +251,5 @@ def initialize_owners_file():
     如果文件不存在，创建空文件
     """
     if not os.path.exists(OWNERS_FILE):
-        os.makedirs('data', exist_ok=True)
+        os.makedirs(os.path.dirname(OWNERS_FILE), exist_ok=True)
         write_json_file(OWNERS_FILE, {'owners': []})

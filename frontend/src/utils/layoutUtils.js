@@ -3,10 +3,11 @@
  * 处理项目块的位置计算和重叠检测
  */
 import dayjs from 'dayjs'
+import { PROJECT_BAR_HEIGHT, PROJECT_BAR_MARGIN, PROJECT_LABEL_HEIGHT, PROJECT_LABEL_GAP, PROJECT_LABEL_SPACING, PROJECT_BAR_NAME_PADDING } from './constants.js'
 
 /**
  * 计算项目块的位置和尺寸
- * 注意：项目块宽度会减去1天，用于显示项目间的视觉间隔
+ * 保留固定像素间隔，并把跨出时间范围的部分裁剪到边界。
  * @param {Object} project - 项目对象
  * @param {Object} timelineParams - 时间轴参数
  * @returns {Object} 位置和尺寸 {left, width}
@@ -16,16 +17,125 @@ export function calculateProjectBarPosition(project, timelineParams) {
   
   // 计算起始位置（相对于时间轴起点的偏移）
   const startOffset = dayjs(project.startDate).diff(minDate, 'day')
-  const left = startOffset * pixelsPerDay
+  const left = Math.max(0, startOffset * pixelsPerDay)
   
   // 计算宽度（项目持续天数）
-  const duration = dayjs(project.endDate).diff(project.startDate, 'day') + 1 // +1 包含结束日
-  
-  // 减去1天宽度用于显示项目间隔，但保证最小宽度为0.5天
-  // 这样可以在所有项目块之间形成视觉上的间隔，提高可读性
-  const width = Math.max(duration * pixelsPerDay - pixelsPerDay, pixelsPerDay * 0.5)
+  const endOffset = dayjs(project.endDate).diff(minDate, 'day') + 1
+  const right = Math.min(endOffset * pixelsPerDay, timelineParams.totalWidth ?? Infinity)
+  const durationWidth = Math.max(0, right - left)
+  const gap = Math.min(2, durationWidth / 4)
+  const width = durationWidth - gap
   
   return { left, width }
+}
+
+export function getProjectDateLabel(project) {
+  const start = dayjs(project.startDate)
+  const end = dayjs(project.endDate)
+  const format = start.year() === end.year() ? 'MM/DD' : 'YYYY/MM/DD'
+  return start.isSame(end, 'day')
+    ? start.format(format)
+    : `${start.format(format)}–${end.format(format)}`
+}
+
+/**
+ * 色条只表达工期，名称和日期根据实际文字宽度选择显示位置。
+ * 外置名称的位置由整行布局进一步调整。
+ */
+export function calculateProjectBarLayout(project, timelineParams, measurement = {}) {
+  const { left, width } = calculateProjectBarPosition(project, timelineParams)
+  const dateLabel = getProjectDateLabel(project)
+  const nameWidth = measurement.nameWidth ?? Array.from(project.name).reduce(
+    (sum, character) => sum + (/[^\x00-\x7F]/.test(character) ? 13 : 7), 0
+  )
+  const dateWidth = measurement.dateWidth ?? dateLabel.length * 7
+  const availableWidth = Math.max(0, width - (measurement.contentInset ?? 30))
+  const compactWidth = Math.max(0, width - (measurement.borderInset ?? 6) - PROJECT_BAR_NAME_PADDING * 2)
+  const mode = nameWidth + 2 <= availableWidth && dateWidth + 2 <= availableWidth
+    ? 'full'
+    : (nameWidth + 2 <= compactWidth ? 'name' : 'external')
+  const layout = { left, width, mode, dateLabel, occupiedStart: left, occupiedEnd: left + width }
+
+  if (mode === 'external') {
+    const labelGap = 6
+    const desiredWidth = Math.min(240, Math.ceil(nameWidth) + 2)
+    const rightSpace = Math.max(0, (timelineParams.totalWidth ?? Infinity) - left - width - labelGap)
+    const leftSpace = Math.max(0, left - labelGap)
+    const labelSide = rightSpace >= desiredWidth || rightSpace >= leftSpace ? 'right' : 'left'
+    const labelWidth = Math.min(desiredWidth, labelSide === 'right' ? rightSpace : leftSpace)
+    const labelLeft = labelSide === 'right' ? left + width + labelGap : left - labelGap - labelWidth
+    Object.assign(layout, {
+      labelSide, labelLeft, labelWidth, desiredLabelWidth: desiredWidth,
+      occupiedStart: Math.min(left, labelLeft),
+      occupiedEnd: Math.max(left + width, labelLeft + labelWidth)
+    })
+  }
+
+  return layout
+}
+
+function rangesOverlap(firstStart, firstEnd, secondStart, secondEnd, gap = 0) {
+  return firstStart < secondEnd + gap && secondStart < firstEnd + gap
+}
+
+/** 先排工期，再为名称安排位置，同一行的所有色条共享垂直位置。 */
+function positionRowLabels(rowProjects, timelineParams) {
+  const sideLabels = []
+  const aboveLabels = []
+
+  for (const project of rowProjects) {
+    const layout = project.layout
+    if (layout.mode !== 'external') continue
+
+    const overlapsBar = rowProjects.some(other => other.id !== project.id && rangesOverlap(
+      layout.occupiedStart, layout.occupiedEnd, other.layout.left, other.layout.left + other.layout.width
+    ))
+    const overlapsSideLabel = sideLabels.some(other => rangesOverlap(
+      layout.occupiedStart, layout.occupiedEnd, other.occupiedStart, other.occupiedEnd, PROJECT_LABEL_SPACING
+    ))
+
+    if (!overlapsBar && !overlapsSideLabel) {
+      sideLabels.push(layout)
+      continue
+    }
+
+    const labelWidth = Math.min(layout.desiredLabelWidth, timelineParams.totalWidth ?? Infinity)
+    const centeredLeft = layout.left + layout.width / 2 - labelWidth / 2
+    const labelLeft = Math.max(0, Math.min(centeredLeft, (timelineParams.totalWidth ?? Infinity) - labelWidth))
+
+    Object.assign(layout, {
+      labelSide: 'above', labelLeft, labelWidth,
+      occupiedStart: layout.left, occupiedEnd: layout.left + layout.width
+    })
+    aboveLabels.push(layout)
+  }
+
+  const totalWidth = timelineParams.totalWidth ?? Infinity
+  const requiredWidth = aboveLabels.reduce((sum, layout) => sum + layout.labelWidth, 0) +
+    Math.max(0, aboveLabels.length - 1) * PROJECT_LABEL_SPACING
+  if (requiredWidth > totalWidth) return null
+
+  let previousEnd = -PROJECT_LABEL_SPACING
+  for (const layout of aboveLabels) {
+    layout.labelLeft = Math.max(layout.labelLeft, previousEnd + PROJECT_LABEL_SPACING)
+    previousEnd = layout.labelLeft + layout.labelWidth
+  }
+  let rightBoundary = totalWidth
+  for (let index = aboveLabels.length - 1; index >= 0; index--) {
+    const layout = aboveLabels[index]
+    layout.labelLeft = Math.min(layout.labelLeft, rightBoundary - layout.labelWidth)
+    rightBoundary = layout.labelLeft - PROJECT_LABEL_SPACING
+  }
+
+  return aboveLabels.length ? PROJECT_LABEL_HEIGHT + PROJECT_LABEL_GAP : 0
+}
+
+function createRowLayouts(projects, timelineParams, measurements) {
+  const rowProjects = projects.map(project => ({
+    ...project, layout: calculateProjectBarLayout(project, timelineParams, measurements[project.id])
+  }))
+  const labelSpace = positionRowLabels(rowProjects, timelineParams)
+  return labelSpace === null ? null : { rowProjects, labelSpace }
 }
 
 /**
@@ -40,8 +150,8 @@ export function isTimeOverlap(p1, p2) {
   const start2 = dayjs(p2.startDate)
   const end2 = dayjs(p2.endDate)
   
-  // 两个时间段重叠的条件：start1 < end2 && start2 < end1
-  return start1.isBefore(end2) && start2.isBefore(end1)
+  // 开始和结束日期都包含当天，同日项目需要分行。
+  return !start1.isAfter(end2, 'day') && !start2.isAfter(end1, 'day')
 }
 
 /**
@@ -50,7 +160,7 @@ export function isTimeOverlap(p1, p2) {
  * @param {Array} projects - 同一产品线的项目列表
  * @returns {Array} 带行号的项目列表
  */
-export function assignRows(projects) {
+export function assignRows(projects, timelineParams, measurements = {}) {
   if (!projects || projects.length === 0) {
     return []
   }
@@ -67,12 +177,13 @@ export function assignRows(projects) {
     
     // 找到第一个不冲突的行
     while (true) {
-      // 检查当前行是否有冲突
-      const conflicts = result.filter(p => 
-        p.row === row && isTimeOverlap(p, project)
-      )
-      
-      if (conflicts.length === 0) {
+      const rowProjects = result.filter(item => item.row === row)
+      const hasTimeOverlap = rowProjects.some(item => isTimeOverlap(item, project))
+      const placement = !hasTimeOverlap && timelineParams
+        ? createRowLayouts([...rowProjects, project], timelineParams, measurements)
+        : null
+
+      if (!hasTimeOverlap && (!timelineParams || placement)) {
         // 没有冲突，分配到这一行
         result.push({ ...project, row })
         break
@@ -80,6 +191,20 @@ export function assignRows(projects) {
       
       // 有冲突，尝试下一行
       row++
+    }
+  }
+
+  if (timelineParams) {
+    let top = PROJECT_BAR_MARGIN
+    const rowCount = Math.max(...result.map(project => project.row)) + 1
+    for (let row = 0; row < rowCount; row++) {
+      const rowProjects = result.filter(project => project.row === row)
+      const placement = createRowLayouts(rowProjects, timelineParams, measurements)
+      const barTop = top + placement.labelSpace
+      rowProjects.forEach((project, index) => {
+        project.layout = { ...placement.rowProjects[index].layout, top: barTop }
+      })
+      top = barTop + PROJECT_BAR_HEIGHT + PROJECT_BAR_MARGIN
     }
   }
   
@@ -123,6 +248,10 @@ export function groupProjectsByProductLine(projects, productLines) {
 export function calculateSwimlaneHeight(projects, barHeight = 40, barMargin = 8) {
   if (!projects || projects.length === 0) {
     return barHeight + barMargin * 2 // 最小高度
+  }
+
+  if (projects.every(project => typeof project.layout?.top === 'number')) {
+    return Math.max(...projects.map(project => project.layout.top + barHeight)) + barMargin
   }
   
   // 找出最大的行号

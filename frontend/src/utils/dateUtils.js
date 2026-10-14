@@ -27,7 +27,7 @@ export function calculateTimelineParams(projects) {
   const maxDate = now.add(TIMELINE_TOTAL_MONTHS_AFTER, 'month').endOf('month')
   
   // 计算总天数
-  const totalDays = maxDate.diff(minDate, 'day')
+  const totalDays = maxDate.startOf('day').diff(minDate.startOf('day'), 'day') + 1
   
   return {
     minDate,
@@ -200,7 +200,7 @@ export function calculateCustomTimelineParams(rangeType, customRange) {
       maxDate = now.add(5, 'month').endOf('month')
   }
   
-  const totalDays = maxDate.diff(minDate, 'day')
+  const totalDays = maxDate.startOf('day').diff(minDate.startOf('day'), 'day') + 1
   
   return {
     minDate,
